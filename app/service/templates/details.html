@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<title>Explorance API - Details</title>
+<meta name="description" content="">
+{% endblock %}
+
+{% block content %}
+<main role="main" style="margin: 1rem;">
+    <div class="container-fluid">
+        <h2 class="title">
+            <a href="{{url_for('site.index')}}">
+                <i class="fa-solid fa-circle-chevron-left"></i>
+            </a>
+            Explorance API Details
+        </h2>
+
+        <input type="hidden" data-id="{{ project_details['project_id'] }}" id="project_id" value="{{ project_details['project_id'] }}"/>
+
+        <div class="row">
+            <div class="col-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <span class="float-right">
+                            <a href="{{ globals.d2l_url }}/{{ project_details['AID'] }}" style="font-size: 1em" target="_blank"
+                                data-title="Open in Amathuba'" data-id="{{ project_details['AID'] }}" class="btn btn-link" title="Open in Amathuba">
+                                <i class="fa fa-external-link" aria-hidden="true"></i>
+                            </a>
+                        </span>
+
+                        <label>Name:</label>&nbsp;<span id="project_name">{{ project_details['name'] }}</span><br/>
+                        <label>Start Date:</label>&nbsp;<span id="project_start">{{ project_details['start_date'] }}</span><br/>
+                        <label>End Date:</label>&nbsp;<span id="project_end">{{ project_details['end_date'] }}</span><br/>
+                        <label>Course ID:</label>&nbsp;<span id="project_aid">{{ project_details['AID'] }}</span><br/>
+                        {% set lookup = ('Inactive', 'Active') %}
+                        <label>Status: </label>&nbsp;<span id="project_active">{{ lookup[project_details['active']] }}</span>
+                        <br/>
+                        <a href="{{ globals.d2l_url }}/{{ project_details['AID'] }}" type="button" class="btn mb-2 btn-outline-secondary">Back</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h3>Download CSV</h3>
+                        <table class="table table-striped table-bordered table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th style="width: 50px;">All</th>
+                                    <th style="width: 50px;">Current</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Project</td>
+                                    <td colspan="2" class="text-center">
+                                        <a href="{{ url_for('api.get_project', id = project_details['project_id'], csv=1) }}"
+                                        title="Project Details" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Courses</td>
+                                    <td colspan="2" class="text-center">
+                                        <a href="{{ url_for('api.get_project_courses', id = project_details['project_id'], csv=1, current=1) }}"
+                                        title="Courses details for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Week</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_weeks', id = project_details['project_id'], csv=1) }}"
+                                        title="All weeks for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_weeks', id = project_details['project_id'], csv=1, current=1) }}"
+                                        title="Current active week for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Week Courses</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_week_courses', id = project_details['project_id'], csv=1) }}"
+                                        title="All week course links for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_week_courses', id = project_details['project_id'], csv=1, current=1) }}"
+                                        title="Current active week course links for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Week Students</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_week_students', id = project_details['project_id'], csv=1) }}"
+                                        title="All week with students for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_week_students', id = project_details['project_id'], csv=1, current=1) }}"
+                                        title="Current active week with students for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                </tr>
+                                <tr>
+                                    <td>Week-Course Students</td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_week_course_students', id = project_details['project_id'], csv=1) }}"
+                                        title="All week with courses and students for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                    <td class="text-center">
+                                        <a href="{{ url_for('api.get_project_week_course_students', id = project_details['project_id'], csv=1, current=1) }}"
+                                        title="Current active week with courses and students for this project" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-file-arrow-down"></i></a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br/>
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h4>Week&nbsp;&nbsp;&nbsp;<small id="week_details"></small></h4>
+                        <table id="tblWeeks" class="table table-striped table-bordered table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th style="width: max(30%, 200px);">Start Date</th>
+                                    <th style="width: max(30%, 200px);">End Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in weeks %}
+                                    <tr id="row-{{ week['direct_id'] }}">
+                                        <td>{{ week['name'] }} <small>({{ week['week_id'] }})</small></td>
+                                        <td>{{ week['start_date'] }}</td>
+                                        <td>{{ week['end_date'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-7">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h4>Course&nbsp;&nbsp;&nbsp;<small id="course_details"></small></h4>
+                        <table id="tblCourses" class="table table-striped table-bordered table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Dept. Code</th>
+                                    <th>Dept. Name</th>
+                                    <th>Faculty Code</th>
+                                    <th>Faculty Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                    <tr id="row-{{ course['course_code'] }}">
+                                        <td style="font-size: 90%;">{{ course['course_code'] }}</td>
+                                        <td style="font-size: 84%;">{{ course['title'] }}</td>
+                                        <td style="font-size: 90%;">{{ course['dept_code'] }}</td>
+                                        <td style="font-size: 84%;">{{ course['dept_name'] }}</td>
+                                        <td style="font-size: 90%;">{{ course['faculty_code'] }}</td>
+                                        <td style="font-size: 84%;">{{ course['faculty_name'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- <form id="course_form" role="form" novalidate
+            method="post" action="{{ url_for('api.create_project') }}">
+
+            <div class="row form-row">
+                <div class="col-12">
+                    <label for="course-offerings">Weeks:</label>
+                    <table id="project_week_table" class="table table-striped table-bordered table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Start & End</th>
+                                <th>&nbsp;</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr id="week-1" date-no="1">
+                                <td><input type="text" /></td>
+                                <td><input type="text" class="datefilter" class="form-control pull-right" value="">
+                                <td><button>-</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </form> -->
+    </div>
+
+</main>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+    $(function() {
+
+        new DataTable('#tblWeeks');
+        new DataTable('#tblCourses');
+
+        $('input[class="datefilter"]').daterangepicker({
+            autoUpdateInput: false,
+            "maxSpan": {
+                "days": 6
+            },
+            "showISOWeekNumbers": true,
+            "drops": "down",
+            locale: {
+                cancelLabel: 'Clear',
+                "firstDay": 1
+            }
+        });
+
+        $('input[class="datefilter"]').on('apply.daterangepicker', function(ev, picker) {
+            $(this).val(picker.startDate.format('MM/DD/YYYY') + ' - ' + picker.endDate.format('MM/DD/YYYY'));
+        });
+
+        // Create Project
+        $("#form_create_project").on('submit', function(event){
+            event.preventDefault();
+            event.stopPropagation();
+
+            const _modal = $('#create_project_modal'),
+                  _form = $('#form_create_project'),
+                  _btn  = $('#btn_project_submit');
+
+            let formData = new FormData(this);
+            // formData.set('sites', formData.getAll('all_sites').join(','));
+            // formData.set('send_create_mail', $('#create_notification').is(":checked") ? '1' : '0');
+            // console.log(formData);
+
+            if (this.checkValidity() === true) {
+                _btn.html('<i class="fa fa-cog fa-spin"></i>&nbsp;&nbsp;Creating Project ...').addClass('disabled').attr('disabled', true);
+
+               // Send AJAX request
+               $.ajax({
+                    url: $(this).attr('action'),
+                    type: $(this).attr('method'),
+                    data: formData, dataType: "json",
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        console.log(response);
+                        _btn.html('Create Project').removeClass('disabled').attr('disabled', false);
+
+                        if (response['status'] == 'success') {
+                            $('#tblproject_list').DataTable().search(response['data']['UserName']).draw();
+                            _modal.modal('hide');
+                            $().msgpopup({
+                                text: 'Project was created',
+                                type: 'success'
+                            });
+                        } else {
+                            $().msgpopup({
+                                text: response['data'] ,
+                                type: 'error'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log(error);
+                        _btn.html('Create Project').removeClass('disabled').attr('disabled', false);
+                        _modal.modal('hide');
+                        $().msgpopup({
+                            text: 'Could not create Project.',
+                            type: 'error'
+                        });
+                    }
+                });
+            }
+            _form.addClass('was-validated');
+
+        });
+
+
+    });
+</script>
+{% raw %}
+<script type="text/x-tmpl" id="tmpl-users">
+{% $.each(o, function (key, val) { %}
+<span class="metadata-entry">{%=val%}</span>
+{% }); %}
+</script>
+{% endraw %}
+{% endblock %}

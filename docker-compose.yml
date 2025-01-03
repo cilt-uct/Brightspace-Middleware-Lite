@@ -1,0 +1,16 @@
+services:
+  middleware:
+    container_name: middleware
+    image: localhost:5000/middleware:latest
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env.run
+    ports:
+      - 9091:9090
+    logging:
+      options:
+        max-size: "100m"
+        max-file: "5"
