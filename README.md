@@ -6,4 +6,5 @@ This service is to handle the communication between the [Migration Tsugi Tool](h
 
 The serivce is split into a FastApi UI/API and a APSCheduler to manage the refreshing of the token.
 
-***Note:*** **This service is still in devlopment and testing and is not suitable for production.**
+***Note:*** **This service is still in development and testing and is not suitable for production.**
+
