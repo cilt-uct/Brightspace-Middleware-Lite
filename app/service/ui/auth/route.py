@@ -1,7 +1,10 @@
 import logging
 
+from datetime import datetime
+
+from fastapi import Form
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 from fastapi.security import OAuth2PasswordRequestForm
@@ -9,91 +12,109 @@ from fastapi_login.exceptions import InvalidCredentialsException
 
 from sqlalchemy.orm import Session
 
-from .forms import LoginForm
+from .forms import LoginForm, RegisterForm
+from .manager import manager
+
+from auth.dependencies import admin_required, is_first_run, Hasher
+from core.settings import AppSettings, settings
 from db.database import get_db
+from db import crud, models
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 logger = logging.getLogger("uvicorn")
 
+@router.get("/register", response_class=HTMLResponse)
+@router.post("/register", response_class=HTMLResponse)
+async def register_page(request: Request, db: Session = Depends(get_db), admin_user: models.User = Depends(admin_required)):
+    form = RegisterForm(request)
+    await form.load_data()
 
-# def query_user(credentials:str, Session = Depends(get_db)):
+    if request.method == "POST":
+        if await form.is_valid():
+            # Check if username already exists
+            existing_user = crud.get_user(db, username=form.username)
+            if existing_user:
+                form.errors.append("Username already exists")
+            else:
+                # Create new user
+                new_user = models.User(
+                    username=form.username,
+                    password=Hasher.get_password_hash(form.password),
+                    name=form.name,
+                    is_active=True,
+                    is_admin=False,  # by default regular user
+                    created_on=datetime.utcnow()
+                )
+                db.add(new_user)
+                db.commit()
+                db.refresh(new_user)
+                # Redirect to login after successful registration
+                return RedirectResponse(url=f"{settings.app_prefix}/login", status_code=302)
 
-#     current_username_bytes = credentials.username.encode("utf8")
-#     current_password_bytes = credentials.password.encode("utf8")
+    return templates.TemplateResponse("system/register.html", {"request": request, "form": form})
 
-#     correct_username_bytes = None
-#     correct_password_bytes = None
+@router.get("/setup", response_class=HTMLResponse)
+@router.post("/setup", response_class=HTMLResponse)
+async def first_run(request: Request, db: Session = Depends(get_db), first_run_flag: bool = Depends(is_first_run)):
 
-#     db_user = crud.get_user(db, eid=credentials.username)
-#     if db_user:
-#         correct_username_bytes = db_user.eid.encode("utf8")
-#         correct_password_bytes = db_user.password.encode("utf8")
+    # If there are already users, redirect to login
+    if not first_run_flag:
+        return RedirectResponse(url=f"{settings.app_prefix}/login", status_code=302)
 
-#     if not correct_username_bytes or not correct_password_bytes:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect username or password",
-#             headers={"WWW-Authenticate": "Basic"},
-#         )
+    form = RegisterForm(request)
+    await form.load_data()
 
-#     is_correct_username = secrets.compare_digest(
-#         current_username_bytes, correct_username_bytes
-#     )
+    if request.method == "POST":
+        if await form.is_valid():
+            # Create the first user as admin
+            new_user = models.User(
+                username=form.username,
+                password=Hasher.get_password_hash(form.password),
+                name=form.name,
+                is_active=True,
+                is_admin=True,   # first user is admin
+                created_on=datetime.utcnow()
+            )
+            db.add(new_user)
+            db.commit()
+            db.refresh(new_user)
 
-#     is_correct_password = (Hasher.verify_password(current_password_bytes, correct_password_bytes))
+            # Redirect to login after creation
+            return RedirectResponse(url=f"{settings.app_prefix}/login", status_code=302)
 
-#     if correct_password_bytes and not (is_correct_username and is_correct_password):
-#         if db_user:
-#             db_user.login_count = db_user.login_count + 1
-#             db.session.commit()
+    # GET or failed POST
+    return templates.TemplateResponse("system/setup.html", {"request": request, "form": form})
 
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Incorrect username or password",
-#             headers={"WWW-Authenticate": "Basic"},
-#         )
+@router.get("/login", response_class=HTMLResponse)
+@router.post("/login", response_class=HTMLResponse)
+async def login_page(request: Request, db: Session = Depends(get_db)):
 
-#     if db_user:
-#         db_user.last_login = datetime.now()
-#         db_user.login_count = 0
-#         db.commit()
+    if db.query(models.User).count() == 0:
+        logger.info("No users exist, redirecting to setup")
+        return RedirectResponse(url=f"{settings.app_prefix}/setup", status_code=302)
 
-#     return credentials.username
+    form = LoginForm(request)
+    await form.load_data()
 
-# @router.post("/login")
-# def login(data: OAuth2PasswordRequestForm = Depends()):
-#     email = data.username
-#     password = data.password
+    if request.method == "POST":
+        if await form.is_valid():
+            # Try to authenticate user
+            db_user = crud.get_user(db, username=form.username)
+            logger.info(f'Attempt login for user: {form.username} {form.password}')
+            if not db_user or not Hasher.verify_password(form.password.encode(), db_user.password.encode()):
+                form.errors.append("Incorrect username or password")
+            else:
+                # Successful login, create token & redirect
+                logger.info(f'Login successful for user: {db_user.username}')
+                access_token = manager.create_access_token(data={"sub": db_user.username})
+                response = RedirectResponse(url=f"{settings.app_prefix}/", status_code=302)
+                manager.set_cookie(response, access_token)
+                return response
 
-#     user = query_user(email)
-#     if not user:
-#         # you can return any response or error of your choice
-#         raise InvalidCredentialsException
-#     elif password != user["password"]:
-#         raise InvalidCredentialsException
+    # GET request or failed POST
+    return templates.TemplateResponse("system/login.html", {"request": request, "form": form})
 
-#     return {"status": "Success"}
-
-# @router.get("/login/")
-# def login(request: Request):
-#     return templates.TemplateResponse("system/login.html", {"request": request})
-
-# @router.post("/login/")
-# async def login(request: Request, db: Session = Depends(get_db)):
-#     form = LoginForm(request)
-#     await form.load_data()
-#     if await form.is_valid():
-#         try:
-#             form.__dict__.update(msg="Login Successful :)")
-#             response = templates.TemplateResponse("system/login.html", form.__dict__)
-#             login_for_access_token(response=response, form_data=form, db=db)
-#             return response
-#         except HTTPException:
-#             form.__dict__.update(msg="")
-#             form.__dict__.get("errors").append("Incorrect Email or Password")
-#             return templates.TemplateResponse("system/login.html", form.__dict__)
-#     return templates.TemplateResponse("system/login.html", form.__dict__)
 
 @router.get("/logout", response_class=HTMLResponse)
 async def ui_logout(request: Request):

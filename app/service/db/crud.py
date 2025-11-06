@@ -12,14 +12,14 @@ sys.path.append('..')
 from utils.hasher import Hasher
 from schemas.datatables import DataTableRequest, DataTableResponse
 
-def get_user(db: Session, eid: str):
-    return db.query(models.User).filter(models.User.eid == eid).first()
+def get_user(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
 def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(eid=user.eid,
+    db_user = models.User(username=user.username,
                           name=user.name,
                           created_on=datetime.now(),
                           last_login=None,

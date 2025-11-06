@@ -34,4 +34,4 @@ docker_build() {
 }
 
 # Build D2L
-docker_build middleware .
+docker_build middleware app

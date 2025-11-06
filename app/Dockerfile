@@ -1,5 +1,5 @@
 # Base Image
-FROM python:3.11-slim
+FROM python:3.12-slim-bookworm
 
 ADD VERSION .
 
@@ -14,8 +14,9 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 # Create directory for the app user
 RUN mkdir -p /home/app
 
-# Create the app user
-RUN groupadd app && useradd -g app app
+# Create the app user with fixed UID and GID
+RUN groupadd -g 1005 app && \
+    useradd -u 1005 -g app -m app
 
 # Create the home directory
 ENV HOME=/home/app

@@ -3,7 +3,7 @@ import uvicorn
 import signal
 
 from app import app as app_fastapi
-from core.config import config
+from core.settings import settings
 
 class Server(uvicorn.Server):
     """ Uvicorn server overrides signals """
@@ -23,12 +23,12 @@ async def main(workers:int = 4):
     await shutdown_signal(loop, stop_event)
 
     server = uvicorn.Server(config=uvicorn.Config(app_fastapi,
-                            port=9090, host="0.0.0.0",
-                            root_path="/lite",
-                            forwarded_allow_ips="*",
-                            workers=workers,
-                            log_level=config.log_level,
-                            loop="asyncio"))
+                                    port=9090, host="0.0.0.0",
+                                    root_path=settings.app_prefix,
+                                    forwarded_allow_ips="*",
+                                    workers=workers,
+                                    log_level=settings.log_level,
+                                    loop="asyncio"))
 
     server_task = asyncio.create_task(server.serve())
 

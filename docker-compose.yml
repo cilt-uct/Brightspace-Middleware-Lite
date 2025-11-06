@@ -1,3 +1,7 @@
+secrets:
+  passwords:
+    file: /usr/local/serverconfig/lite.cfg   # absolute path is OK - Compose v2 resolves it at runtime
+
 services:
   middleware:
     container_name: middleware
@@ -8,6 +12,8 @@ services:
     restart: always
     env_file:
       - .env.run
+    secrets:
+      - passwords
     ports:
       - 9091:9090
     logging:

@@ -1,59 +1,115 @@
+# auth/dependencies.py
 import secrets
+import bcrypt
 
 from datetime import datetime
-from fastapi import Depends, HTTPException, status
+
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.responses import RedirectResponse
+from fastapi_login.exceptions import InvalidCredentialsException
+
 from sqlalchemy.orm import Session
-from typing import Annotated
+from typing import Annotated, Union
 
+from ui.auth.manager import manager
 from db.database import get_db
-from db import crud, database, models, schemas
-from utils.hasher import Hasher
+from db import crud, models
 
-security = HTTPBasic()
+from core.settings import AppSettings, settings, logger
 
-def authenticate_user(credentials: Annotated[HTTPBasicCredentials, Depends(security)],
+security = HTTPBasic(auto_error=False)  # <- this prevents automatic 401
+
+async def authenticate_user(request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)] = None, db: Session = Depends(get_db)) -> Union[str, RedirectResponse]:
+
+    logger.info(f"Authenticating user : {db.query(models.User).count()} users in DB")
+
+    # First-run
+    if db.query(models.User).count() == 0:
+        return RedirectResponse(url=f"{settings.app_prefix}/setup", status_code=302)
+
+    # Try cookie-based login
+    logger.info("Trying cookie-based authentication")
+    try:
+        username = await manager.get_current_user(request)
+        logger.info(f'Cookie-based login attempt for user: {username}')
+
+        db_user = crud.get_user(db, username=username)
+        if db_user and db_user.is_active:
+            return db_user.username
+
+    except Exception as e:
+        logger.info(e)
+        pass
+
+    # Fallback to HTTPBasic
+    logger.info(f"credentials {credentials}")
+    if credentials:
+        db_user = crud.get_user(db, username=credentials.username)
+        if not db_user or not Hasher.verify_password(credentials.password.encode(), db_user.password.encode()):
+            return RedirectResponse(url=f"{settings.app_prefix}/login", status_code=302)
+        # successful HTTPBasic login > issue token
+        access_token = manager.create_access_token(data={"sub": db_user.username})
+        response = RedirectResponse(url=f"{settings.app_prefix}/", status_code=302)
+        manager.set_cookie(response, access_token)
+        return response
+
+    # no token, no credentials
+    return RedirectResponse(url=f"{settings.app_prefix}/login", status_code=302)
+
+
+async def get_current_user(request: Request, db: Session = Depends(get_db)) -> models.User | None:
+    try:
+        username = await manager.get_current_user(request)
+    except InvalidCredentialsException:
+        return None
+
+    user = crud.get_user(db, username=username)
+    if not user or not user.is_active:
+        return None
+    return user
+
+# Reuse your authenticate_user dependency to get the username
+async def admin_required(
+    username: Annotated[str, Depends(authenticate_user)],
     db: Session = Depends(get_db)
-):
+) -> models.User:
+    user = crud.get_user(db, username=username)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized")
 
-    current_username_bytes = credentials.username.encode("utf8")
-    current_password_bytes = credentials.password.encode("utf8")
+    if not (user.is_active and user.is_admin):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden: Admins only")
 
-    correct_username_bytes = None
-    correct_password_bytes = None
+    return user
 
-    db_user = crud.get_user(db, eid=credentials.username)
-    if db_user:
-        correct_username_bytes = db_user.eid.encode("utf8")
-        correct_password_bytes = db_user.password.encode("utf8")
+async def is_first_run(db: Session = Depends(get_db)) -> bool:
+    """Return True if no users exist yet"""
+    return db.query(models.User).count() == 0
 
-    if not correct_username_bytes or not correct_password_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
+class Hasher():
+    # Hash a password using bcrypt
+    @staticmethod
+    def get_password_hash(password):
+        pwd_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password=pwd_bytes, salt=salt)
+        return hashed_password
 
-    is_correct_username = secrets.compare_digest(
-        current_username_bytes, correct_username_bytes
-    )
+    # Check if the provided password matches the stored password (hashed)
+    @staticmethod
+    def verify_password(plain_password, hashed_password):
+        if not plain_password or not hashed_password:
+            return False
 
-    is_correct_password = (Hasher.verify_password(current_password_bytes, correct_password_bytes))
+        if isinstance(plain_password, (bytes, bytearray)):
+            password_byte_enc = plain_password
+        else:
+            password_byte_enc = plain_password.encode('utf-8')
 
-    if correct_password_bytes and not (is_correct_username and is_correct_password):
-        if db_user:
-            db_user.login_count = db_user.login_count + 1
-            db.session.commit()
+        if isinstance(hashed_password, (bytes, bytearray)):
+            hashed_password_byte_enc = hashed_password
+        else:
+            hashed_password_byte_enc = hashed_password.encode('utf-8')
 
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-
-    if db_user:
-        db_user.last_login = datetime.now()
-        db_user.login_count = 0
-        db.commit()
-
-    return credentials.username
+        return bcrypt.checkpw(password = password_byte_enc , hashed_password = hashed_password_byte_enc)

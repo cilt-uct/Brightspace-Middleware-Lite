@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Register</title>
+    <title>Setup</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
 </head>
 <body>
     <div class="register-container">
-        <h1>Register</h1>
+        <h1>Setup</h1>
 
         {% if form.errors %}
             <div class="errors">
@@ -19,7 +19,7 @@
             </div>
         {% endif %}
 
-        <form method="post" action="{{ url_for('register_page') }}">
+        <form method="post" action="{{ url_for('first_run') }}">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" value="{{ form.username or '' }}" required>
@@ -35,7 +35,7 @@
                 <input type="password" id="password" name="password" required>
             </div>
 
-            <button type="submit">Register</button>
+            <button type="submit">Complete Setup</button>
         </form>
     </div>
 </body>
