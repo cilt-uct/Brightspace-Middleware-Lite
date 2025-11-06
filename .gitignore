@@ -1,6 +1,7 @@
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 
@@ -9,7 +10,6 @@ instance/
 .webassets-cache
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -17,6 +17,8 @@ ENV/
 env.bak/
 venv.bak/
 .idea
+.vscode
+.python-version
 
 app/**/VERSION
 
@@ -26,6 +28,9 @@ app/**/VERSION
 
 # datafiles
 *.csv
+
+# logfiles
+.log
 
 c.py
 p.py

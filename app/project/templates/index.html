@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<title>UCT D2L Middleware</title>
+<meta name="description" content="" />
+{% endblock %}
+
+{% block content %}
+    <iframe id="main-frame" src="{{ url_for('site.welcome') }}"></iframe>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+    $(function() {
+        $('.vertnav a.nav-link:not(.dropdown-toggle)').on('click', function(event){
+            event.preventDefault();
+            const _me = $(this);
+            $('#main-frame').attr('src', _me.attr('href'));
+            $('#page-title').html(`<i class="${_me.data('icon')}"></i><span class="ml-3 item-text">${_me.data('title')}</span>`);
+        });
+
+        $( window ).resize(function() {
+            $('#main-frame').css('height', ($('#leftSidebar').height() - $('.topnav.navbar').height() - 78) + 'px');
+        });
+
+        $('#main-frame').css('height', ($('#leftSidebar').height() - $('.topnav.navbar').height() - 78) + 'px');
+    });
+
+    window.addEventListener('message',
+        function(e) {
+            console.log(e);
+            console.log(e.data);
+            let message = e.data;
+
+            if (message.height) {
+                iframe.height = message.height + 'px';
+            }
+        }, false );
+</script>
+{% endblock %}

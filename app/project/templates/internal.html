@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="author" content="" />
+
+    <link rel="icon" href="{{ url_for('static', filename= 'img/favicon.ico') }}" />
+    <link rel="icon" href="{{ url_for('static', filename= 'img/favicon.svg') }}" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename= 'img/apple-touch-icon.png') }}" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/normalize.css') }}" />
+
+    <!-- Fonts CSS -->
+    <link href="//fonts.googleapis.com/css2?family=Overpass:ital,wght@0,100;0,200;0,300;0,400;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet" type="text/css" />
+
+    <!-- Icons CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/feather.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'third-party/fontawesome-6-free/css/all.css') }}" />
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/app-light.min.css') }}" id="lightTheme" />
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/app-dark.min.css') }}" id="darkTheme" disabled />
+
+    <!-- Date Range Picker | Popup CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/daterangepicker.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/jquery-msgpopup.css') }}" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/custom.css') }}" id="custom" />
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/datatables.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/dataTables.bootstrap4.min.css') }}" />
+
+    <!-- Scripts
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <script src="{{ url_for('static', filename= 'js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename= 'js/tmpl.min.js') }}"></script>
+    <script type="text/javascript">
+        jQuery.fn.exists = function(){ return this.length > 0; }
+
+        function getObj(id, arr, key) { key = key || 'id'; var o = null; $.each(arr, function (i, el) { if (el[key] == id) { o=el; return; } }); return o; };
+        function cleanObj(o) { Object.keys(o).forEach(key => o[key] === undefined ? delete o[key] : {}); return o; }
+
+        const _amathuba_url = "{{ globals.d2l_url }}";
+    </script>
+    {{ moment.include_moment() }}
+    {{ JSGlue.include() }}
+    {% block header %}
+    {% endblock %}
+</head>
+<body class="vertical light content">
+    {% block content %}
+    {% endblock %}
+
+    <!-- TODO : minify all JS -->
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/bootstrap.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/jquery.validate.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/daterangepicker.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/jquery-msgpopup.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/datatables.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename= 'js/jquery.multi_select.js') }}"></script>
+    <script type="text/javascript">
+        function postResize() {
+            parent.postMessage(JSON.stringify({
+                subject: "iframeResize",
+                width:  window.innerWidth,
+                height: window.innerHeight
+            }), "*");
+        }
+        window.onresize = postResize;
+    </script>
+    {% block footer %}
+    {% endblock %}
+</body>
+</html>

@@ -1,10 +1,20 @@
 # Base Image
-FROM python:3.12-slim-bookworm
+FROM python:3.11-slim-bookworm
 
 ADD VERSION .
 
-# Install curl
-RUN apt-get update && apt-get install -y curl pkg-config build-essential default-libmysqlclient-dev
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install system dependencies for mysqlclient and other Python packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    default-libmysqlclient-dev \
+    libxml2-dev \
+    libxslt-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set Timezone for Docker Container
 RUN apt-get update && apt-get install -y tzdata
@@ -21,16 +31,16 @@ RUN groupadd -g 1005 app && \
 # Create the home directory
 ENV HOME=/home/app
 ENV APP_HOME=/home/app
-
+RUN mkdir $APP_HOME
 WORKDIR $APP_HOME
 
-# Install python dependencies
-COPY ./requirements.txt $APP_HOME
-RUN pip install --no-cache-dir --upgrade -r $APP_HOME/requirements.txt
+# install python dependencies
+RUN pip install --upgrade pip
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
 
-# copy project
-COPY ./VERSION $APP_HOME
-COPY ./service $APP_HOME
+# copy project - includes entrypoint.sh
+COPY . $APP_HOME
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
@@ -38,5 +48,5 @@ RUN chown -R app:app $APP_HOME
 # change to the app user
 USER app
 
-# Run
-ENTRYPOINT ["/home/app/entrypoint.sh"]
+# run entrypoint.prod.sh
+ENTRYPOINT ["bash","/home/app/entrypoint.sh"]
