@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<title>UCT D2L Middleware</title>
+<meta name="description" content="" />
+{% endblock %}
+
+{% block content %}
+<div class="row items-align-baseline">
+    <div class="col-12">
+        <ul class="nav nav-tabs mb-3" id="home_tabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="logs-tab" data-toggle="tab" href="#logs" role="tab" aria-controls="logs" aria-selected="true">Logs</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="users-tab" data-toggle="tab" href="#users" role="tab" aria-controls="users">Users</a>
+            </li>
+        </ul>
+    </div>
+</div>
+<div class="row items-align-baseline">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-body tab-content" id="home_tab_containers">
+                <!-- Logs -->
+                <div class="tab-pane fade active show" id="logs" role="tabpanel" aria-labelledby="logs-tab">
+                    <div class="col-12" style="display: flex;justify-content: space-between;margin-bottom: 10px;">
+                        <input type="hidden" id="selected_display_status" value="All" />
+
+                        <ul class="nav nav-pills justify-content-start" id="status_display"></ul>
+                    </div>
+
+                    <div class="table-responsive-xs table-responsive-sm table-responsive-md table-responsive-lg" id="logs_table_container">
+                        <table class="table table-striped table-bordered table-hover table-sm" id="logs_table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Request</th>
+                                    <th>Result</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                </div>
+                <!-- users -->
+                <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+                    <div class="table-responsive-xs table-responsive-sm table-responsive-md table-responsive-lg" id="users_table_container">
+                        <table class="table table-striped table-bordered table-hover table-sm" id="users_table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Created</th>
+                                    <th>Last Login</th>
+                                    <th>Active</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot></tfoot>
+                        </table>
+                    </div>
+                    <div id="users_detail_container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+<script type="text/javascript">
+    function display_filters(data){
+        $('#status_display').html(tmpl('tmpl-status-count', {
+                                        'selected': $('#selected_display_status').exists ? $('#selected_display_status').val() : 'All',
+                                        'counts': data['count_status']}));
+    }
+
+    $(function() {
+        $('.vertnav a.nav-link:not(.dropdown-toggle)').on('click', function(event){
+            event.preventDefault();
+            const _me = $(this);
+            $('#main-frame').attr('src', _me.attr('href'));
+            $('#page-title').html(`<i class="${_me.data('icon')}"></i><span class="ml-3 item-text">${_me.data('title')}</span>`);
+        });
+
+        $( window ).resize(function() {
+            $('#main-frame').css('height', ($('#leftSidebar').height() - $('.topnav.navbar').height() - 78) + 'px');
+        });
+
+        $('#main-frame').css('height', ($('#leftSidebar').height() - $('.topnav.navbar').height() - 78) + 'px');
+
+        //logs table
+        let logs_table = new DataTable('#logs_table', {
+            ajax: {
+                url: Flask.url_for("site.system.get_call_logs_ajax"),
+                type: 'POST',
+                dataType: 'json',
+                contentType: "application/json",
+                data: function ( d ) {
+                     return JSON.stringify($.extend( {}, d, {
+                        'status': ($('#selected_display_status').exists() ? $('#selected_display_status').val() : 'All')
+                    } ));
+                },
+                "dataSrc": function ( json ) {
+                    if (typeof window['display_filters'] === 'function') {
+                        window['display_filters'](json);
+                    }
+                    return json['data'];
+                }
+            },
+            "columns": [
+                { "data": "status" },
+                { "data": "request" },
+                { "data": "result" },
+                { "data": "created_at", render: function (data, type, row) {
+                    if (data == null) {
+                        return '';
+                    }
+                    return moment(data.replace(' GMT','')).fromNow();
+                }},
+            ],
+            processing: true,
+            serverSide: true,
+            autoWidth: false
+        });
+
+        logs_table.on('draw.dt', function () {
+            console.log( 'Table redrawn user_table' );
+            // postResize();
+        });
+        logs_table.on('dblclick', 'tbody tr', function(event) {
+            event.preventDefault();
+        });
+        logs_table.on('click', 'tbody tr td a', function(event) {
+            event.preventDefault();
+        });
+
+        //user table
+        let user_table = new DataTable('#users_table', {
+            ajax: {
+                url: Flask.url_for("site.settings.get_site_users_ajax"),
+                type: 'POST',
+                dataType: 'json',
+                contentType: "application/json",
+                data: function ( d ) {
+                    return JSON.stringify(d);
+                }
+            },
+            "columns": [
+                { "data": "name" },
+                { "data": "username" },
+                { "data": "created_on", render: function (data, type, row) {
+                    if (data == null) {
+                        return '';
+                    }
+                    return moment(data.replace(' GMT','')).fromNow();
+                }},
+                { "data": "last_login", render: function (data, type, row) {
+                    if (data == null) {
+                        return '';
+                    }
+                    return moment(data.replace(' GMT','')).fromNow();
+                }},
+                { "data": "is_active" }
+            ],
+            processing: true,
+            serverSide: true,
+            autoWidth: false
+        });
+
+        user_table.on('draw.dt', function () {
+            console.log( 'Table redrawn user_table' );
+            // postResize();
+        });
+        user_table.on('dblclick', 'tbody tr', function(event) {
+            event.preventDefault();
+        });
+        user_table.on('click', 'tbody tr td a', function(event) {
+            event.preventDefault();
+        });
+
+        $('.nav-pills').on('click','.nav-link', function(event){
+            event.preventDefault();
+            const _el = $(this);
+            if (_el.parent().parent().attr('id') == 'status_display') {
+                $('#selected_display_status').val($(this).attr('rel'));
+            }
+            $('#logs_table').DataTable().ajax.reload();
+        });
+    });
+
+    window.addEventListener('message',
+        function(e) {
+            console.log(e);
+            console.log(e.data);
+            let message = e.data;
+
+            if (message.height) {
+                iframe.height = message.height + 'px';
+            }
+        }, false );
+</script>
+{% raw %}
+<script type="text/x-tmpl" id="tmpl-status-count">
+    <li class="nav-item">
+        <a class="nav-link px-2 {%=(o.selected == 'All' ? 'active': '')%}" href="#" rel="All">
+            All
+        </a>
+    </li>
+    {% $.each(o.counts, function (key,row) {  console.log(row); %}
+    <li class="nav-item">
+        <a class="nav-link px-2 {%=(row['status_group'] == o.selected ? 'active': '')%}" href="#" rel="{%=row['status_group']%}">
+            {%=row['status_group']%}
+            <span class="badge badge-pill bg-white border ml-2">{%=(new Intl.NumberFormat().format(row['c']))%}</span>
+        </a>
+    </li>
+    {% }); %}
+</script>
+{% endraw %}
+{% endblock %}

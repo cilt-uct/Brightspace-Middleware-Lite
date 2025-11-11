@@ -1,0 +1,58 @@
+secrets:
+  passwords:
+    file: /usr/local/serverconfig/lite.cfg   # absolute path is OK - Compose v2 resolves it at runtime
+
+services:
+  lite_web:
+    container_name: lite_web
+    image: localhost:5000/lite_web:latest
+    build:
+      context: ./services/web
+      dockerfile: Dockerfile
+    command: gunicorn --conf /home/app/web/gunicorn_conf.py --bind 0.0.0.0:6010 manage:app
+    restart: always
+    # volumes:
+    #   - static_volume:/home/app/web/project/static
+    logging:
+      options:
+        max-size: "100m"
+        max-file: "5"
+    expose:
+      - 6010
+    env_file:
+      - ./.env
+      - ../.env.run
+    secrets:
+      - passwords
+
+  lite_scheduler:
+    image: localhost:5000/lite_web:latest  # reuse same image
+    build:
+      context: ./services/web
+      dockerfile: Dockerfile
+    command: python /home/app/web/project/run_scheduler.py
+    restart: always
+    env_file:
+      - ./.env
+      - ../.env.run
+    secrets:
+      - passwords
+
+  nginx:
+    container_name: lite_nginx
+    image: localhost:5000/lite_nginx:latest
+    build: ./services/nginx
+    restart: always
+    # volumes:
+    #   - static_volume:/home/app/web/project/static
+    logging:
+      options:
+        max-size: "100m"
+        max-file: "5"
+    ports:
+      - 9091:80
+    depends_on:
+      - lite_web
+
+# volumes:
+#   static_volume:

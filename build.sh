@@ -33,5 +33,6 @@ docker_build() {
     fi
 }
 
-# Build D2L
-docker_build middleware app
+# Build
+docker_build lite_web app/services/web/
+docker_build lite_nginx app/services/nginx/

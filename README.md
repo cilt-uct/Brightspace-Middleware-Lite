@@ -4,17 +4,16 @@ This service is to handle the communication between the [Migration Tsugi Tool](h
 
 ## Structure
 
-The serivce is split into a FastApi UI/API and a APSCheduler to manage the refreshing of the token.
+The serivce is split into a Flask UI/API and a APSCheduler to manage the refreshing of the token.
 
 ***Note:*** **This service is still in development and testing and is not suitable for production.**
 
-
 Install required packages:
 ```
-pip install -r app/requirements.txt
+pip install -r app/services/web/requirements.txt
 ```
 
-Remove all installe packages:
+Remove all installed packages:
 ```
 pip freeze | xargs pip uninstall -y
 ```

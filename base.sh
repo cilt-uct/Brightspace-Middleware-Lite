@@ -65,7 +65,7 @@ writeConfiguration() {
 
         IFS="=" read find replace <<< "$line"
 
-        sed -i -e "/#.*/! s;$find;$replace;" $OUTPUT
+        sed -i -e "/#.*/! s|$find|$replace|" $OUTPUT
       fi
 
   done < $INPUT
@@ -140,8 +140,4 @@ cp .env.template .env.run
 writeConfiguration "$AUTH_FILE" .env.run
 
 # remove dev versions
-remove_file_if_exists app/service/.env
-remove_file_if_exists app/service/VERSION
-
-#value=$(get_env_value "D2L_SCOPE")
-#echo $value
+remove_file_if_exists app/services/web/VERSION
