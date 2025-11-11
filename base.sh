@@ -140,4 +140,4 @@ cp .env.template .env.run
 writeConfiguration "$AUTH_FILE" .env.run
 
 # remove dev versions
-remove_file_if_exists app/services/web/VERSION
+cp VERSION app/services/web/VERSION
