@@ -17,3 +17,13 @@ Remove all installed packages:
 ```
 pip freeze | xargs pip uninstall -y
 ```
+
+Ignore import ordering and not at top of file
+```
+# ruff: noqa: E402, I001
+````
+
+Ignore the line-too-long
+```
+# noqa: E501
+```

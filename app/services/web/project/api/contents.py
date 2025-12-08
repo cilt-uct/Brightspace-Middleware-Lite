@@ -1,10 +1,7 @@
-import traceback
 import json
 
-from flask import current_app, Blueprint, jsonify, request
+from flask import Blueprint, current_app, request
 from flask_login import login_required
-
-from urllib.parse import urlparse, parse_qs
 
 from ..utils import Utils
 
@@ -75,24 +72,24 @@ def add_file_to_module(org_id: int, module_id: int):
     if org_id_int <= 0 or module_id_int <= 0:
         return Utils.return_error_state(f'{org_id=} and {module_id=} must be positive integers.')
 
-    if "file" not in request.files:
-        return Utils.return_error_state("No file part in the request")
+    if 'file' not in request.files:
+        return Utils.return_error_state('No file part in the request')
 
     details = data.get('detail')
     if isinstance(details, str):
         try:
             details = json.loads(details)
         except json.JSONDecodeError:
-            return Utils.return_error_state("Detail is not valid JSON")
+            return Utils.return_error_state('Detail is not valid JSON')
 
     try:
         return current_app.d2l_client.content.add_file_to_module(org_unit_id=org_id,
                                                                 module_id=module_id,
                                                                 details=details,
-                                                                file=request.files["file"])
+                                                                file=request.files['file'])
 
     except Exception as e:
-        return Utils.return_error_state(f"Could not add file to module {org_id=} {module_id=}: {e}", 500)
+        return Utils.return_error_state(f'Could not add file to module {org_id=} {module_id=}: {e}', 500)
 
 
 # Update the description (HTML) of a specific module in a course
@@ -119,13 +116,13 @@ def update_module_description(org_id: str, module_id: str):
     try:
         root = current_app.d2l_client.content.retrieve_root(org_id)
     except Exception as e:
-        return Utils.return_error_state('Error retrieving modules.', 502)
+        return Utils.return_error_state(f'Error retrieving modules ({e}).', 502)
 
     if root.get('status') != 'success' or not isinstance(root.get('data'), list):
         return Utils.return_error_state('Failed to retrieve modules or malformed response.', 502)
 
     parent_node = next(
-        (module for module in root['data'] if str(module.get("Id")) == module_id), None
+        (module for module in root['data'] if str(module.get('Id')) == module_id), None
     )
 
     if not parent_node:
@@ -145,7 +142,7 @@ def update_module_description(org_id: str, module_id: str):
     if update_result.get('status') != 'success':
         return Utils.return_error_state('Failed to update module description.', 502)
 
-    return Utils.return_success_state({"org_id": org_id, "parent_id": module_id, "updated": True})
+    return Utils.return_success_state({'org_id': org_id, 'parent_id': module_id, 'updated': True})
 
 
 # Get course topics content - either all topics (root) or a specific topic
@@ -172,11 +169,11 @@ def course_topics_file(org_id: int, topic_id: int):
     if int(topic_id) <= 0:
         return Utils.return_error_state(f'{topic_id=} must be a positive integer.')
 
-    currentTopicContent = current_app.d2l_client.content.get_course_topic_content_file(org_id, topic_id)
+    current_topic_content = current_app.d2l_client.content.get_course_topic_content_file(org_id, topic_id)
 
     # get the file here
     if request.method == 'GET':
-        return currentTopicContent
+        return current_topic_content
 
     # put file if checks are true
     if request.method == 'PUT':
@@ -184,10 +181,10 @@ def course_topics_file(org_id: int, topic_id: int):
         if data is None:
             return Utils.return_error_state('Invalid content type', 406)
 
-        if currentTopicContent['status'] == 'success':
+        if current_topic_content['status'] == 'success':
             filename = data.get('name') if 'name' in data else None
             return current_app.d2l_client.content.update_course_topic_file_html(
-                org_unit_id=org_id, topic_id=topic_id, topicDataHtml=data.get('html'), filename=filename)
+                org_unit_id=org_id, topic_id=topic_id, topic_data_html=data.get('html'), filename=filename)
 
     return Utils.return_error_state('Method Not Allowed', 405)
 
@@ -218,7 +215,7 @@ def reorder_module(org_id: int, title: str, position: str):
             object_id=module_id,
             first=True if position == 'first' else False
         )
-    except Exception as e:
+    except Exception:
         return Utils.return_error_state(f'Failed to reorder module "{title}".', 500)
 
 # Order modules in a course by title and position; uses reorder_module

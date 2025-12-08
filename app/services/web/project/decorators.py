@@ -1,13 +1,14 @@
+# ruff: noqa: E402, I001
 import json
-
-from flask import current_app, session, request, Response
-from flask_login import current_user
 from functools import wraps
 
-from .db.models import CallLog
-from project.app import alchemy_db
+from flask import request, Response
 
-SERVICE_NOW_USERNAME = "servicenow_script"
+from project.app import alchemy_db
+from .db.models import CallLog
+
+
+SERVICE_NOW_USERNAME = 'servicenow_script'
 
 def process_call_request(func):
     @wraps(func)
@@ -24,9 +25,9 @@ def process_call_request(func):
         elif request.files:
             file_data = {
                 key: {
-                    "filename": file.filename,
-                    "content_type": file.content_type,
-                    "size": len(file.read())
+                    'filename': file.filename,
+                    'content_type': file.content_type,
+                    'size': len(file.read())
                 }
                 for key, file in request.files.items()
             }
@@ -44,7 +45,7 @@ def process_call_request(func):
             # log error case
             alchemy_db.session.add(CallLog(
                 request=json.dumps(request_body),
-                result=json.dumps({"error": str(e)}),
+                result=json.dumps({'error': str(e)}),
                 status=500
             ))
             alchemy_db.session.commit()
@@ -67,7 +68,7 @@ def process_call_request(func):
                 request_result = result.get_json()
                 status = result.status_code
             except Exception:
-                request_result = {"status": result.status_code}
+                request_result = {'status': result.status_code}
                 status = result.status_code
         else:
             request_result = result

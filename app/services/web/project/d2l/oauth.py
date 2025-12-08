@@ -1,6 +1,3 @@
-from flask import current_app
-from flask_sqlalchemy import SQLAlchemy
-
 from datetime import datetime, timedelta
 
 from project.app import alchemy_db as db
@@ -10,7 +7,7 @@ TOKEN_VALID_CHECK = timedelta(minutes=30)
 TOKEN_SOON_CHECK = timedelta(hours=3)
 
 class SharedToken(db.Model):
-    __tablename__ = "auth_token"
+    __tablename__ = 'auth_token'
 
     client_id = db.Column(db.String(255), primary_key=True)
     token = db.Column(db.Text)
@@ -56,21 +53,21 @@ class SharedToken(db.Model):
     def soon(self) -> bool:
         return self.expires < (datetime.now() - TOKEN_SOON_CHECK).timestamp()
 
-    def to_dict(self, exclude=["client_id", "token", "refresh_token", "scope"]):
+    def to_dict(self, exclude=['client_id', 'token', 'refresh_token', 'scope']):
 
         data = {
-            "client_id": self.client_id,
-            "token": self.token,
-            "refresh_token": self.refresh_token,
-            "expires": self.expires,
-            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
-            "scope": self.scope,
-            "modified_at": self.modified_at.isoformat() if self.modified_at else None,
-            "active": self.active,
-            "is_expired": self.is_expired,
-            "is_token_valid": self.is_token_valid,
-            "countdown": self.countdown,
-            "soon": self.soon,
+            'client_id': self.client_id,
+            'token': self.token,
+            'refresh_token': self.refresh_token,
+            'expires': self.expires,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'scope': self.scope,
+            'modified_at': self.modified_at.isoformat() if self.modified_at else None,
+            'active': self.active,
+            'is_expired': self.is_expired,
+            'is_token_valid': self.is_token_valid,
+            'countdown': self.countdown,
+            'soon': self.soon,
         }
         if exclude:
             for key in exclude:

@@ -28,88 +28,88 @@ COURSE_OFFERING_TYPE = 3
 
 ## DEFAULT VALUES #####################################################
 OUTYPES = {
-    "dept": {
-        "Id": 101,
-        "Code": "Department",
-        "Name": "Department"
+    'dept': {
+        'Id': 101,
+        'Code': 'Department',
+        'Name': 'Department'
     },
-    "semester": {
-        "Id": 5,
-        "Code": "Semester",
-        "Name": "Semester"
+    'semester': {
+        'Id': 5,
+        'Code': 'Semester',
+        'Name': 'Semester'
     },
-    "faculty": {
-        "Id": 103,
-        "Code": "Faculty",
-        "Name": "Faculty"
+    'faculty': {
+        'Id': 103,
+        'Code': 'Faculty',
+        'Name': 'Faculty'
     },
-    "template": {
-        "Id": 2,
-        "Code": "Course Template",
-        "Name": "Course Template"
+    'template': {
+        'Id': 2,
+        'Code': 'Course Template',
+        'Name': 'Course Template'
     },
-    "program": {
-        "Id": 102,
-        "Code": "Program",
-        "Name": "Program"
+    'program': {
+        'Id': 102,
+        'Code': 'Program',
+        'Name': 'Program'
     },
-    "course": {
-        "Id": 3,
-        "Code": "Course Offering",
-        "Name": "Course Offering"
+    'course': {
+        'Id': 3,
+        'Code': 'Course Offering',
+        'Name': 'Course Offering'
     },
-    "group": {
-        "Id": 4,
-        "Code": "Group",
-        "Name": "Group"
+    'group': {
+        'Id': 4,
+        'Code': 'Group',
+        'Name': 'Group'
     }
 }
 
 # Should be database lookup
 ROLES = {
-  "Super Administrator": 105,
-  "super administrator": 105,
-  "Administrator": 116,
-  "administrator": 116,
-  "Designer": 113,
-  "designer": 113,
-  "Lecturer": 109,
-  "lecturer": 109,
-  "Owner": 122,
-  "owner": 122,
-  "Support Staff": 118,
-  "support staff": 118,
-  "SupportStaff": 118,
-  "supportstaff": 118,
-  "LecturerTutor": 126,
-  "lecturertutor": 126,
-  "Tutor": 114,
-  "tutor": 114,
-  "Student": 110,
-  "student": 110,
-  "Guest": 120,
-  "guest": 120,
-  "Member": 121,
-  "member": 121,
-  "Observer": 111,
-  "observer": 111,
-  "Staff": 119,
-  "staff": 119,
-  "ThirdParty": 128,
-  "thirdparty": 128
+  'Super Administrator': 105,
+  'super administrator': 105,
+  'Administrator': 116,
+  'administrator': 116,
+  'Designer': 113,
+  'designer': 113,
+  'Lecturer': 109,
+  'lecturer': 109,
+  'Owner': 122,
+  'owner': 122,
+  'Support Staff': 118,
+  'support staff': 118,
+  'SupportStaff': 118,
+  'supportstaff': 118,
+  'LecturerTutor': 126,
+  'lecturertutor': 126,
+  'Tutor': 114,
+  'tutor': 114,
+  'Student': 110,
+  'student': 110,
+  'Guest': 120,
+  'guest': 120,
+  'Member': 121,
+  'member': 121,
+  'Observer': 111,
+  'observer': 111,
+  'Staff': 119,
+  'staff': 119,
+  'ThirdParty': 128,
+  'thirdparty': 128
 }
 
 # AMA-733 - Amathuba Announcements Site: Auto enrollments to an org unit
 TEACHING_ROLES = [116, 109, 126]
 
 SAKAI_ROLES = {
-    "guest": 120,
-    "student": 110,
-    "staff": 119,
-    "thirdparty": 128,
-    "lecturer": 109,
-    "member": 121,
-    "owner": 122
+    'guest': 120,
+    'student': 110,
+    'staff': 119,
+    'thirdparty': 128,
+    'lecturer': 109,
+    'member': 121,
+    'owner': 122
 }
 
 OTHER_TERM_TEMPLATE = {

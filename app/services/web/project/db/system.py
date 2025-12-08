@@ -1,9 +1,8 @@
-from datetime import datetime
-from mysql.connector import connection, Error
-
 import MySQLdb.cursors
 
-class System(object):
+
+class System:
+
     def __init__(self, client) -> None:
         self._client = client
 
@@ -15,7 +14,7 @@ class System(object):
                         search_st:str = '',
                         search_regex:bool = False):
 
-        result = {'draw' : int(draw), "recordsTotal": 0, "recordsFiltered": 0, "data":[] }
+        result = {'draw' : int(draw), 'recordsTotal': 0, 'recordsFiltered': 0, 'data':[] }
         try:
             with self._client.mysql.connection.cursor(MySQLdb.cursors.DictCursor) as cursor:
                 search_sql = ''
@@ -37,7 +36,10 @@ class System(object):
                                     {search_sql}
                                     order by `{order_column}` {order_dir}
                                     limit %(start)s, %(length)s """
-                cursor.execute(final_sql, {'start': start, 'length': length, 'search_st': search_st, 'dt': '%Y-%m-%d %H:%i:%S'})
+                cursor.execute(final_sql, {'start': start,
+                                            'length': length,
+                                            'search_st': search_st,
+                                            'dt': '%Y-%m-%d %H:%i:%S'})
                 result['data'] = cursor.fetchall()
 
         except (MySQLdb.Error, MySQLdb.Warning) as e:

@@ -1,16 +1,14 @@
-from enum import Enum
-from flask import current_app
+# ruff: noqa: E402, I001
+from datetime import datetime
+
 from flask_login import UserMixin
 
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from project.app import alchemy_db as db, bcrypt
 
-from project.app import alchemy_db as db
-from project.app import bcrypt
 
 class User(UserMixin, db.Model):
 
-    __tablename__ = "system_user"
+    __tablename__ = 'system_user'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, unique=True, nullable=False)
@@ -31,10 +29,10 @@ class User(UserMixin, db.Model):
         self.is_active = is_active
 
     def __repr__(self):
-        return f"<username {self.username}>"
+        return f'<username {self.username}>'
 
 class CallLog(db.Model):
-    __tablename__ = "call_log"
+    __tablename__ = 'call_log'
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     request = db.Column(db.Text())
@@ -49,4 +47,4 @@ class CallLog(db.Model):
         self.created_at = datetime.now()
 
     def __repr__(self):
-        return '<CallLog %r>' % self.id
+        return f'<CallLog {self.id}>'

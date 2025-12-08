@@ -1,24 +1,23 @@
+# ruff: noqa: E402, I001
 import base64
-import json
-import re
-import mimetypes
 import ipaddress
-import zipfile
+import json
+import mimetypes
 import re
-
+import zipfile
 from datetime import datetime
-from typing import List, Dict, Optional, Iterable, Union
+
 from flask import current_app, jsonify
 
-from .constants import *
+from .constants import ROLES, SAKAI_ROLES
 
 class Utils:
 
     @staticmethod
     def format_time(value: datetime, is_webhook: bool = False) -> str:
         if is_webhook:
-            return value.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-        return value.strftime("%Y-%m-%dT%H:%M:%S")
+            return value.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        return value.strftime('%Y-%m-%dT%H:%M:%S')
 
     @staticmethod
     def get_json_from_base64(_str: str) -> dict:
@@ -30,9 +29,9 @@ class Utils:
         Returns:
             dict: JSON dict
         """
-        decodedBytes = base64.b64decode(_str + '=' * (-len(_str) % 4))
-        decodedStr = decodedBytes.decode("ascii")
-        return json.loads(decodedBytes)
+        decoded_bytes = base64.b64decode(_str + '=' * (-len(_str) % 4))
+        # decoded_str = decoded_bytes.decode('ascii')
+        return json.loads(decoded_bytes)
 
     # Python code to merge dict using a single expression
     @staticmethod
@@ -130,7 +129,7 @@ class Utils:
         return None
 
     @staticmethod
-    def batch(iterable: Iterable, size: int) -> Iterable[List]:
+    def batch(iterable, size: int) -> list:
         """Yield successive chunks of a given size from an iterable."""
         batch_list = []
         for item in iterable:
@@ -147,28 +146,28 @@ class Utils:
     def add_duplicate_postfix(code):
         match = re.search(r'(-D(\d+))$', code)
         if not match:
-            if code.endswith("-D"):
-                return f"{code}2"
-            return f"{code}-D"
+            if code.endswith('-D'):
+                return f'{code}2'
+            return f'{code}-D'
 
         prefix = code[: -len(match.group(1))]
         number = int(match.group(2)) + 1
-        return f"{prefix}-D{number}"
+        return f'{prefix}-D{number}'
 
 
     # Replaces a 4-digit year (like 2023) that is
     # preceded by - or _ with a new term value, while preserving the original separator (- or _).
     @staticmethod
     def replace_year(st, term):
-        return re.sub(r"([-_])\d{4}(?![A-Z])", lambda match: f"{match.group(1)}{term}", st)
+        return re.sub(r'([-_])\d{4}(?![A-Z])', lambda match: f'{match.group(1)}{term}', st)
 
     @staticmethod
     def get_order_column_name(order, columns):
-        order_column_index = order[0]["column"]
+        order_column_index = order[0]['column']
 
         if 0 <= order_column_index < len(columns):
-            order_column_name = columns[order_column_index]["data"]
-            return order_column_name, order[0]["dir"]
+            order_column_name = columns[order_column_index]['data']
+            return order_column_name, order[0]['dir']
         else:
             return None, 'asc'
 
@@ -220,26 +219,11 @@ class Utils:
     @staticmethod
     def get_client_ip(request):
         # Get the IP from X-Forwarded-For if behind a proxy
-        if "X-Forwarded-For" in request.headers:
-            ip = request.headers["X-Forwarded-For"].split(",")[0].strip()
+        if 'X-Forwarded-For' in request.headers:
+            ip = request.headers['X-Forwarded-For'].split(',')[0].strip()
         else:
             ip = request.remote_addr  # Fallback if not behind a proxy
         return ip
-
-    @staticmethod
-    def parse_request_data(request):
-        content_type = request.headers.get('Content-Type')
-
-        if content_type.startswith('application/json'):
-            return request.get_json()
-
-        elif content_type.startswith('application/x-www-form-urlencoded'):
-            return request.form.to_dict()
-
-        elif content_type.startswith('multipart/form-data'):
-            return request.form
-
-        return None
 
     @staticmethod
     def return_success_state(msg, code: int = 200):

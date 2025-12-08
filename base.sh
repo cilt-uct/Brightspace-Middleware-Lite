@@ -141,3 +141,6 @@ writeConfiguration "$AUTH_FILE" .env.run
 
 # remove dev versions
 cp VERSION app/services/web/VERSION
+
+# create dev requirements file
+cat app/services/web/requirements.txt template-dev-requirements.txt > requirements-dev.txt

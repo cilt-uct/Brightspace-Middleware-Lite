@@ -1,6 +1,8 @@
+# ruff: noqa: E402, I001, N818
+# Ignore import order and naming conventions for exception classes
 import json
 
-from werkzeug.wrappers import Request, Response
+from werkzeug.wrappers import Response
 
 class BaseError(Exception):
 
@@ -8,7 +10,7 @@ class BaseError(Exception):
         # Decode bytes
         if isinstance(data, bytes):
             try:
-                data = data.decode("utf-8")
+                data = data.decode('utf-8')
             except Exception:
                 data = str(data)
 
@@ -21,8 +23,8 @@ class BaseError(Exception):
                 pass  # leave as plain string
 
         # If JSON has "Errors", unwrap it
-        if isinstance(data, dict) and "Errors" in data and len(data["Errors"]) > 0:
-            data = data["Errors"][0].get("Message", data)
+        if isinstance(data, dict) and 'Errors' in data and len(data['Errors']) > 0:
+            data = data['Errors'][0].get('Message', data)
 
         self.data = data
         self.status_code = status_code
@@ -33,13 +35,13 @@ class BaseError(Exception):
 
     def get_response(self) -> Response:
         details = self.data
-        if isinstance(self.data, dict) and "details" in self.data:
-            details = self.data["details"]
+        if isinstance(self.data, dict) and 'details' in self.data:
+            details = self.data['details']
 
         return {
-            "status": "ERR",
-            "data": details,
-            "code": self.status_code,
+            'status': 'ERR',
+            'data': details,
+            'code': self.status_code,
         }
 
 class UnknownError(BaseError):

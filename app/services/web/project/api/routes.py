@@ -1,13 +1,8 @@
-import json
-import traceback
-import asyncio
-
-from flask import current_app, Blueprint, request
+from flask import Blueprint, current_app, request
 from flask_login import login_required
 
-from ..utils import Utils
 from ..decorators import process_call_request
-
+from ..utils import Utils
 from .contents import contents
 from .courses import courses
 from .roles import roles

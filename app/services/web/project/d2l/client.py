@@ -1,15 +1,12 @@
-import os, sys, json
-import base64
+# ruff: noqa: E402, I001
+import os
+import sys
 import time
+from datetime import datetime
+
 import requests
-from requests.exceptions import ReadTimeout, ConnectTimeout, RequestException
-
-from typing import Optional
-from urllib.parse import urlencode
+from requests.exceptions import ConnectTimeout, ReadTimeout
 from requests_oauthlib import OAuth2Session
-from datetime import datetime, timedelta
-
-from functools import wraps
 
 current = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(current)
@@ -17,9 +14,9 @@ sys.path.append(current)
 from . import exceptions
 from .response import Response
 from .decorators import token_required
-from .exceptions import BaseError, TokenRequired
+from .exceptions import BaseError
 
-from .oauth import SharedToken, get_shared_token, set_shared_token, get_token_details
+from .oauth import get_shared_token, set_shared_token, get_token_details
 
 from .content import Content
 from .courses import Course
@@ -29,7 +26,7 @@ from .users import User
 from ..constants import DEFAULT_LP_VERSION, DEFAULT_LE_VERSION, DEFAULT_LR_VERSION, \
                         DEFAULT_EP_VERSION, DEFAULT_BFP_VERSION, DEFAULT_BAS_VERSION
 
-class Client(object):
+class Client:
 
     def __init__(
         self,
@@ -147,19 +144,19 @@ class Client(object):
                 authorization_response=redirect_uri.replace('http://', 'https://')
             )
         except Exception as e:
-            print(f"Error exchanging code for token: {e}")
+            print(f'Error exchanging code for token: {e}')
             return False
 
         # Check for required keys
         if not all(k in token for k in ('access_token', 'refresh_token', 'expires_at')):
-            print("Token response missing required fields.")
+            print('Token response missing required fields.')
             return False
 
         try:
             print(token)
             self.set_token(token['access_token'], token['refresh_token'], token['expires_at'])
         except Exception as e:
-            print(f"Error setting token: {e}")
+            print(f'Error setting token: {e}')
             return False
 
         return True
@@ -179,6 +176,7 @@ class Client(object):
             dt_expire_at = datetime.fromtimestamp(expire_at)
             int_expire_at = expire_at
 
+        print(f'Setting token to expire at {dt_expire_at} (epoch: {int_expire_at})')
         self.token = self.update_db_token(token, refresh_token, int_expire_at) # Store in Database
 
     def _refresh_token(self, refresh_token: str) -> None:
@@ -189,12 +187,12 @@ class Client(object):
         instead of the code.
 
         Args:
-            refresh_token (str): An OAuth 2.0 refresh token. Your app can use this token acquire additional access tokens
-            after the current access token expires. Refresh tokens are long-lived, and can be used to retain access
-            to resources for extended periods of time.
+            refresh_token (str): An OAuth 2.0 refresh token. Your app can use this token acquire
+            additional access tokens after the current access token expires. Refresh tokens are long-lived,
+            and can be used to retain access to resources for extended periods of time.
         """
 
-        url = "https://auth.brightspace.com/core/connect/token"
+        url = 'https://auth.brightspace.com/core/connect/token'
 
         payload = {
             'grant_type' : 'refresh_token',
@@ -212,26 +210,26 @@ class Client(object):
             response.raise_for_status()
             refreshed = self._parse(response)
         except requests.RequestException as e:
-            print(f"HTTP error during token refresh: {e}")
+            print(f'HTTP error during token refresh: {e}')
             return False
         except Exception as e:
-            print(f"Error parsing token refresh response: {e}")
+            print(f'Error parsing token refresh response: {e}')
             return False
 
         # Validate refreshed token structure
         if not all(k in refreshed for k in ('access_token', 'refresh_token')):
-            print("Refreshed token response missing required fields.")
+            print('Refreshed token response missing required fields.')
             return False
 
         try:
             header, payload, signature = get_token_details(refreshed['access_token'])
             if 'exp' not in payload:
-                print("Token payload missing 'exp' field.")
+                print('Token payload missing "exp" field.')
                 return False
 
             self.set_token(refreshed['access_token'], refreshed['refresh_token'], payload['exp'])
         except Exception as e:
-            print(f"Error setting refreshed token: {e}")
+            print(f'Error setting refreshed token: {e}')
             return False
 
         return True
@@ -305,24 +303,24 @@ class Client(object):
             return None
 
     def _do_get(self, url, **kwargs) -> Response:
-        kwargs.setdefault("timeout", 10)
-        return self._request("GET", url, **kwargs)
+        kwargs.setdefault('timeout', 10)
+        return self._request('GET', url, **kwargs)
 
     def _post(self, url, **kwargs):
-        kwargs.setdefault("timeout", 60)
-        return self._request("POST", url, **kwargs)
+        kwargs.setdefault('timeout', 60)
+        return self._request('POST', url, **kwargs)
 
     def _put(self, url, **kwargs):
-        kwargs.setdefault("timeout", 30)
-        return self._request("PUT", url, **kwargs)
+        kwargs.setdefault('timeout', 30)
+        return self._request('PUT', url, **kwargs)
 
     def _patch(self, url, **kwargs):
-        kwargs.setdefault("timeout", 30)
-        return self._request("PATCH", url, **kwargs)
+        kwargs.setdefault('timeout', 30)
+        return self._request('PATCH', url, **kwargs)
 
     def _delete(self, url, **kwargs):
-        kwargs.setdefault("timeout", 20)
-        return self._request("DELETE", url, **kwargs)
+        kwargs.setdefault('timeout', 20)
+        return self._request('DELETE', url, **kwargs)
 
     def get_all_version(self) -> dict:
         """Get all the versions
@@ -360,18 +358,18 @@ class Client(object):
     @token_required
     def _request(self, method, url, headers=None, **kwargs) -> Response:
         _headers = {
-            "Authorization": f'Bearer {self.token.token}'
+            'Authorization': f'Bearer {self.token.token}'
         }
 
         if headers:
             _headers.update(headers)
         else:
-            _headers["Accept"] = "application/json"
-            if "Content-Type" not in _headers:
-                _headers["Content-Type"] = "application/json"
+            _headers['Accept'] = 'application/json'
+            if 'Content-Type' not in _headers:
+                _headers['Content-Type'] = 'application/json'
 
         if self.requests_hooks:
-            kwargs.update({"hooks": self.requests_hooks})
+            kwargs.update({'hooks': self.requests_hooks})
 
         for attempt in range(self.retries):
             try:
@@ -381,38 +379,35 @@ class Client(object):
             except (ConnectTimeout, ReadTimeout) as e:
                 if attempt < self.retries - 1:
                     sleep_time = self.backoff_factor * (2 ** attempt)
-                    # print(f"[Retry {attempt+1}/{self.retries}] Timeout occurred: {e}. Retrying in {sleep_time:.1f}s...")
                     time.sleep(sleep_time)
                     continue
                 else:
-                    print(f"_request 384: {e.__class__.__name__} {str(e)}")
                     return self.return_error_state(f'{e.__class__.__name__} {str(e)}')
 
             except Exception as e:
-                print(f"_request 388: {attempt} {e.__class__.__name__} {str(e)} {issubclass(e.__class__, BaseError)}")
                 if issubclass(e.__class__, BaseError):  # assuming your BaseError type
                     return e.get_response()
                 else:
-                    print("Oops!", e.__class__, "occurred.")
+                    print(f'Oops! {e.__class__} occurred.')
                     print(e)
                     return self.return_error_state(str(e))
 
     @token_required
     def _raw(self, method, url, headers=None, **kwargs):
         _headers = {
-            "Authorization": f'Bearer {self.token.token}'
+            'Authorization': f'Bearer {self.token.token}'
         }
 
         if headers:
             _headers.update(headers)
         else:
-            _headers["Accept"] = "application/json"
+            _headers['Accept'] = 'application/json'
 
-            if "Content-Type" not in _headers:
-                _headers["Content-Type"] = "application/json"
+            if 'Content-Type' not in _headers:
+                _headers['Content-Type'] = 'application/json'
 
         if self.requests_hooks:
-            kwargs.update({"hooks": self.requests_hooks})
+            kwargs.update({'hooks': self.requests_hooks})
 
         for attempt in range(self.retries):
             try:
@@ -421,7 +416,6 @@ class Client(object):
             except (ConnectTimeout, ReadTimeout) as e:
                 if attempt < self.retries - 1:
                     sleep_time = self.backoff_factor * (2 ** attempt)
-                    # print(f"[Retry {attempt+1}/{self.retries}] Timeout occurred: {e}. Retrying in {sleep_time:.1f}s...")
                     time.sleep(sleep_time)
                     continue
                 else:
@@ -431,7 +425,7 @@ class Client(object):
                 if issubclass(e.__class__, BaseError):  # assuming your BaseError type
                     return e.get_response()
                 else:
-                    print("Oops!", e.__class__, "occurred.")
+                    print(f'Oops! {e.__class__} occurred.')
                     print(e)
                     return self.return_error_state(str(e))
 
@@ -485,7 +479,7 @@ class Client(object):
         elif status_code == 509:
             raise exceptions.BandwidthLimitExceeded(r.data, status_code)
         else:
-            if r["error"]["innerError"]["code"] == "lockMismatch":
+            if r['error']['innerError']['code'] == 'lockMismatch':
                 # File is currently locked due to being open in the web browser
                 # while attempting to reupload a new version to the drive.
                 # Thus temporarily unavailable.

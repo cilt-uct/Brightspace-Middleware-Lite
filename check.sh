@@ -1,5 +1,7 @@
 #! /bin/bash
 
-SCRIPT_FOLDER=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-cd $SCRIPT_FOLDER
-pre-commit
+source base.sh
+
+pre-commit &&
+python -m ruff check .
+# python -m ruff format --check .

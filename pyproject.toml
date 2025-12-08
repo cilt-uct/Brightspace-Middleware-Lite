@@ -1,0 +1,39 @@
+# app/pyproject.toml
+[tool.ruff]
+lint.select = ["E", "F", "W", "I", "N", "UP", "YTT", "Q"]
+exclude = [
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "node_modules",
+    "migrations",
+    "app/services/nginx/**/*",    # Exclude nginx configs
+    "app/services/web/project/static",
+]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"services/web/migrations/**/*.py" = ["E501", "F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app.services.web", "app.services.web.project.db.models", "app.services.web.project.api.routes", "app.services.web.project.site.routes"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+multiline-quotes = "double"
+docstring-quotes = "double"
+avoid-escape = true  # Don't escape if possible
+
+[tool.ruff.format]
+# Choose your preferred quote style
+quote-style = "single"  # or "double"

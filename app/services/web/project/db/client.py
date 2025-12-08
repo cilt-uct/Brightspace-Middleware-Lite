@@ -2,7 +2,7 @@ from .logs import Logs
 from .system import System
 
 
-class DBClient(object):
+class DBClient:
 
     def __init__(
         self,

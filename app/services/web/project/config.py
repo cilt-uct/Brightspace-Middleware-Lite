@@ -1,6 +1,6 @@
+import configparser
 import os
 import re
-import configparser
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,9 +13,9 @@ class MyConfigParser(configparser.RawConfigParser):
             return val.strip('"').strip("'")
         return val
 
-class Config(object):
+class Config:
 
-    STATIC_FOLDER = f"{os.getenv('APP_FOLDER')}/project/static"
+    STATIC_FOLDER = f'{os.getenv('APP_FOLDER')}/project/static'
     DEBUG = os.environ.get('DEBUG', 'false').lower() in ('true', '1', 't')
     RUNNING_IN_DOCKER = os.environ.get('RUNNING_IN_DOCKER', False)
 
@@ -28,13 +28,13 @@ class Config(object):
     SCHEDULER_API_ENABLED = True
 
     VERSION = ''
-    with open('VERSION', 'r') as file:
+    with open('VERSION') as file:
         VERSION = file.read().rstrip()
 
     # Load secrets from passwords.txt
     secrets_file = '/run/secrets/passwords'
     if os.path.isfile(secrets_file):
-        with open(secrets_file, 'r') as f:
+        with open(secrets_file) as f:
             content = f.read()
 
         content = '[secrets]\n' + content
@@ -47,7 +47,7 @@ class Config(object):
 
         SECRET_KEY = secrets.get('SECRET', os.urandom(24))
 
-        CORS_ORIGINS = secrets.get("CORS_ORIGINS", "https://amathuba.uct.ac.za,https://ucttest.brightspace.com").split(",")
+        CORS_ORIGINS = secrets.get('CORS_ORIGINS', 'https://amathuba.uct.ac.za,https://ucttest.brightspace.com').split(',')
 
         CLIENT_ID = secrets.get('D2L_ID')
         CLIENT_SECRET = secrets.get('D2L_SECRET')
@@ -72,7 +72,7 @@ class Config(object):
         SQLALCHEMY_TRACK_MODIFICATIONS = False
 
         srv = secrets.get('D2L_REDIRECT_URI', None)
-        srv_group = re.search('\/\/([A-Za-z]{3}).*([A-Za-z]{3}\d{3})', srv)
+        srv_group = re.search(r'//([A-Za-z]{3}).*([A-Za-z]{3}\d{3})', srv)
         if srv_group:
             srv = srv_group.group(1) + srv_group.group(2)
         else:

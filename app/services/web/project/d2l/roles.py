@@ -1,8 +1,9 @@
-import json
+# ruff: noqa: E402, I001
 
 from .response import Response
 
-class Role(object):
+class Role:
+
     def __init__(self, client) -> None:
         """Working with roles in Brightspace
 
@@ -25,4 +26,4 @@ class Role(object):
             Response:  This action returns a JSON array of Role data blocks containing the
                        properties of all user roles that the calling user context has permission to manage.
         """
-        return self._client._do_get("{}/roles/".format(self._client.lp_url), params=params)
+        return self._client._do_get('{self._client.lp_url}/roles/', params=params)

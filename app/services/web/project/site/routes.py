@@ -1,17 +1,9 @@
-import os
-import json
-import re
-from distutils import extension
-from datetime import datetime, timedelta
-
-from flask import current_app, redirect, request, session, Blueprint, jsonify, render_template, send_from_directory, url_for
-from flask_login import login_required, current_user
-
-from datetime import datetime, timedelta
-from urllib.parse import urlparse, parse_qs
+# ruff: noqa: E402, I001
+from flask import Blueprint, current_app, jsonify, redirect, render_template
+from flask import request, send_from_directory, session, url_for
+from flask_login import current_user, login_required
 
 from ..utils import Utils
-
 from .settings import settings
 from .system import system
 
@@ -31,31 +23,31 @@ def index():
 def welcome():
     return render_template('welcome.html')
 
-@site.route("/static/<path:filename>")
+@site.route('/static/<path:filename>')
 def staticfiles(filename):
-    return send_from_directory(current_app.config["STATIC_FOLDER"], filename)
+    return send_from_directory(current_app.config['STATIC_FOLDER'], filename)
 
-@site.route('/ping', methods=["GET"])
+@site.route('/ping', methods=['GET'])
 def ping_pong():
     return jsonify(
-        {"status": "success", "data": "pong!"}
+        {'status': 'success', 'data': 'pong!'}
     ), 200
 
 
 ## OAuth ##############################################################
-@site.route('/oauth', methods=["GET"])
+@site.route('/oauth', methods=['GET'])
 def oauth_login():
     auth_info = current_app.d2l_client.authorization_url()
     session['oauth_state'] = auth_info['state']
-    print(f'starting: oauth login with state: {session["oauth_state"]}')
+    print(f'starting: oauth login with state: {session['oauth_state']}')
 
     return redirect(auth_info['authorization_url'])
 
-@site.route('/callback', methods=["GET"])
+@site.route('/callback', methods=['GET'])
 def oauth_callback():
     state = request.args.get('state','none')
     expected_state = session.get('oauth_state', '')
-    print("callback")
+    print('callback')
     # print(state)
     # print(expected_state)
 
@@ -65,7 +57,7 @@ def oauth_callback():
                 print("Error, state doesn't match, redirecting without getting token.")
                 return redirect(url_for('site.index')) # should be error display
         else:
-            print("Error, no session")
+            print('Error, no session')
             return redirect(url_for('site.index')) # should be error display
 
     if current_app.d2l_client.exchange_code(request.url):
@@ -77,7 +69,7 @@ def oauth_callback():
             print(f"{current_user['data']['UniqueName']}")
     else:
         # token not found :(
-        print("token not found :(")
+        print('token not found :(')
         return redirect(url_for('site.index')) # should be error display
 
     return redirect(url_for('site.index'))
