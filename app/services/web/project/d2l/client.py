@@ -21,6 +21,8 @@ from .exceptions import BaseError, TokenRequired
 
 from .oauth import SharedToken, get_shared_token, set_shared_token, get_token_details
 
+from .content import Content
+from .courses import Course
 from .roles import Role
 from .users import User
 
@@ -84,6 +86,8 @@ class Client(object):
         self.bas_url  = f'{self.base_url}bas/{self.bas_version}/'
 
         # Init the Classes
+        self.content = Content(self)
+        self.course = Course(self)
         self.roles = Role(self)
         self.user = User(self)
 

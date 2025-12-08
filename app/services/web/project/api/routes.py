@@ -8,12 +8,16 @@ from flask_login import login_required
 from ..utils import Utils
 from ..decorators import process_call_request
 
+from .contents import contents
+from .courses import courses
 from .roles import roles
 from .settings import settings
 from .users import users
 
 # url_prefix='/lite/api'
 api = Blueprint('api', __name__, url_prefix='/api')
+api.register_blueprint(contents)
+api.register_blueprint(courses)
 api.register_blueprint(roles)
 api.register_blueprint(settings)
 api.register_blueprint(users)
