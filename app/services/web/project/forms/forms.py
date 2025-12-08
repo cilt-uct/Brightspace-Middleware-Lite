@@ -1,43 +1,44 @@
 from flask_wtf import FlaskForm
-from wtforms import BooleanField, StringField, DateField, FileField, HiddenField, PasswordField
-from wtforms.validators import DataRequired, EqualTo, Email, Length
+from wtforms import PasswordField, StringField
+from wtforms.validators import DataRequired, EqualTo, Length
 
 from ..db.models import User
 
+
 class LoginForm(FlaskForm):
-    username = StringField("username", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
+    username = StringField('username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
 
 class RegisterForm(FlaskForm):
     name = StringField(
-        "Name", validators=[DataRequired(), Length(min=1, max=255)]
+        'Name', validators=[DataRequired(), Length(min=1, max=255)]
     )
     username = StringField(
-        "username", validators=[DataRequired()] #, Length(min=8, max=8)]
+        'username', validators=[DataRequired()] #, Length(min=8, max=8)]
     )
     password = PasswordField(
-        "Password", validators=[DataRequired()] #, Length(min=6, max=25)]
+        'Password', validators=[DataRequired()] #, Length(min=6, max=25)]
     )
     confirm = PasswordField(
-        "Repeat password",
+        'Repeat password',
         validators=[
             DataRequired(),
-            EqualTo("password", message="Passwords must match.")
+            EqualTo('password', message='Passwords must match.')
         ],
     )
 
     def validate(self, extra_validators=None):
-        initial_validation = super(RegisterForm, self).validate(extra_validators)
+        initial_validation = super().validate(extra_validators)
 
         if not initial_validation:
             return False
 
         user = User.query.filter_by(username=self.username.data).first()
         if user:
-            self.username.errors.append("Username already registered")
+            self.username.errors.append('Username already registered')
             return False
         if self.password.data != self.confirm.data:
-            self.password.errors.append("Passwords must match")
+            self.password.errors.append('Passwords must match')
             return False
 
         return True

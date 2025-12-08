@@ -1,11 +1,13 @@
-import json
-import base64
+# ruff: noqa: E402, I001
 
+import base64
+import json
 from urllib.parse import urlencode
 
 from .response import Response
 
-class User(object):
+class User:
+
     def __init__(self, client) -> None:
         """Working with users in Brightspace
 
@@ -28,8 +30,7 @@ class User(object):
         Returns:
             Response:  This action returns a WhoAmIUser JSON block for the current user context.
         """
-        # print("{}users/whoami".format(self._client.lp_url))
-        return self._client._do_get("{}users/whoami".format(self._client.lp_url), params=params)
+        return self._client._do_get('{self._client.lp_url}users/whoami', params=params)
 
     def get_user(self, user_id: int = 0, full: bool = False) -> Response:
         """Retrieve data for a particular user.
@@ -46,11 +47,10 @@ class User(object):
         Returns:
             Response:  This action returns a WhoAmIUser JSON block for the current user context.
         """
-        result = self._client._do_get("{}users/{}".format(self._client.lp_url, user_id))
-        # print(result)
+        result = self._client._do_get('{self._client.lp_url}users/{user_id}')
         if result['status'] == 'success':
             if full:
-                names = self._client._do_get("{}users/{}/names".format(self._client.lp_url, user_id))
+                names = self._client._do_get('{self._client.lp_url}users/{user_id}/names')
                 if names['status'] == 'success':
                     result['data']['names'] = names['data']
 
@@ -58,7 +58,7 @@ class User(object):
 
         return self._client.return_error_state(f'User ID not found ({user_id})')
 
-    def get_user_by_EID(self, EID : str, full: bool = False) -> Response:
+    def get_user_by_EID(self, EID : str, full: bool = False) -> Response: # noqa: N802, N803
         """Retrieve data for a user based on their EID (Staff / Student / Third Party Number)
 
         https://docs.valence.desire2learn.com/res/user.html#get--d2l-api-lp-(version)-users-
@@ -74,11 +74,11 @@ class User(object):
             Response:  This action returns a WhoAmIUser JSON block for the current user context.
         """
 
-        result = self._client._do_get("{}users/?userName={}".format(self._client.lp_url, EID))
+        result = self._client._do_get('{self._client.lp_url}users/?userName={EID}')
         # print(f'get_user_by_EID : {result}')
         if result['status'] == 'success':
             if full:
-                names = self._client._do_get("{}users/{}/names".format(self._client.lp_url, result['data']['UserId']))
+                names = self._client._do_get(f'{self._client.lp_url}users/{result['data']['UserId']}/names')
                 if names['status'] == 'success':
                     result['data']['names'] = names['data']
 
@@ -102,11 +102,11 @@ class User(object):
             Response:  This action returns a WhoAmIUser JSON block for the current user context.
         """
 
-        result = self._client._do_get("{}users/?externalEmail={}".format(self._client.lp_url, email))
+        result = self._client._do_get('{self._client.lp_url}users/?externalEmail={email}')
         # print(result)
         if result['status'] == 'success':
             if full:
-                names = self._client._do_get("{}users/{}/names".format(self._client.lp_url, result['data']['UserId']))
+                names = self._client._do_get(f'{self._client.lp_url}users/{result['data']['UserId']}/names')
                 if names['status'] == 'success':
                     result['data']['names'] = names['data']
 
@@ -135,19 +135,19 @@ class User(object):
         """
 
         payload = json.dumps({
-            "OrgDefinedId": org_id,
-            "FirstName": firstname,
-            "MiddleName": middlename,
-            "LastName": lastname,
-            "ExternalEmail": email,
-            "UserName": eid,
-            "RoleId": role,
-            "IsActive": active,
-            "SendCreationEmail": send_create_mail
+            'OrgDefinedId': org_id,
+            'FirstName': firstname,
+            'MiddleName': middlename,
+            'LastName': lastname,
+            'ExternalEmail': email,
+            'UserName': eid,
+            'RoleId': role,
+            'IsActive': active,
+            'SendCreationEmail': send_create_mail
         })
 
         # print(f"create user: {payload}")
-        result = self._client._post("{}users/".format(self._client.lp_url), data=payload)
+        result = self._client._post('{self._client.lp_url}users/', data=payload)
         if result['status'] == 'success':
             if legal_firstname or legal_lastname or preferred_firstname or preferred_lastname or sort_lastname:
                 names = self.update_names(result['data']['UserId'],
@@ -160,7 +160,7 @@ class User(object):
         return result
 
     def delete_user(self, user_id: str):
-        result = self._client._delete("{}users/{}".format(self._client.lp_url, user_id))
+        result = self._client._delete('{self._client.lp_url}users/{user_id}')
         return result
 
     # internal usage
@@ -172,13 +172,14 @@ class User(object):
         https://docs.valence.desire2learn.com/res/user.html#put--d2l-api-lp-(version)-users-(userId)-names
         PUT /d2l/api/lp/(version)/users/(userId)/names
         """
-        return self._client._put("{}users/{}/names".format(self._client.lp_url, user_id), data=json.dumps({
-                "LegalFirstName": legal_firstname,
-                "LegalLastName": legal_lastname,
-                "PreferredFirstName": preferred_firstname,
-                "PreferredLastName": preferred_lastname,
-                "SortLastName": sort_lastname
-            }))
+        return self._client._put('{self._client.lp_url}users/{user_id}/names',
+                                    data=json.dumps({
+                                        'LegalFirstName': legal_firstname,
+                                        'LegalLastName': legal_lastname,
+                                        'PreferredFirstName': preferred_firstname,
+                                        'PreferredLastName': preferred_lastname,
+                                        'SortLastName': sort_lastname
+                                    }))
 
     def update_user(self, eid: str, org_id: str,
                             firstname: str, lastname: str, email: str,
@@ -202,20 +203,20 @@ class User(object):
         user = self.get_user_by_EID(eid)
         if user['status'] == 'success':
             payload = json.dumps({
-                "OrgDefinedId": org_id,
-                "FirstName": firstname,
-                "MiddleName": middlename,
-                "LastName": lastname,
-                "ExternalEmail": email,
-                "UserName": eid,
-                "Activation": {
-                    "IsActive": active
+                'OrgDefinedId': org_id,
+                'FirstName': firstname,
+                'MiddleName': middlename,
+                'LastName': lastname,
+                'ExternalEmail': email,
+                'UserName': eid,
+                'Activation': {
+                    'IsActive': active
                 },
-                "Pronouns": None
+                'Pronouns': None
             })
 
             # print(f"update user: {payload}")
-            result = self._client._put("{}users/{}".format(self._client.lp_url, user['data']['UserId']), data=payload)
+            result = self._client._put(f'{self._client.lp_url}users/{user['data']['UserId']}', data=payload)
             if result['status'] == 'success':
                 if legal_firstname or legal_lastname or preferred_firstname or preferred_lastname or sort_lastname:
                     names = self.update_names(result['data']['UserId'],
@@ -240,12 +241,13 @@ class User(object):
             bookmark (str): (optional) previous bookmark
 
         Returns:
-            Response: This action returns a paged result set containing the resulting UserOrgUnit data blocks for the segment
-                      following your bookmark parameter (or the first segment if the parameter is empty or missing).
+            Response: This action returns a paged result set containing the resulting UserOrgUnit data blocks
+            for the segment following your bookmark parameter
+            (or the first segment if the parameter is empty or missing).
         """
 
 
-        url = f"{self._client.lp_url}/enrollments/users/{user_id}/orgUnits/"
+        url = f'{self._client.lp_url}/enrollments/users/{user_id}/orgUnits/'
 
         params = {'orgUnitTypeId' : 3} # only course offerings.
         if bookmark:
@@ -255,7 +257,7 @@ class User(object):
             params['roleId'] = filter_role
 
         if params:
-            url = '{}?{}'.format(url, urlencode(params))
+            url = f'{url}?{urlencode(params)}'
 
         return self._client._do_get(url)
 
@@ -267,8 +269,9 @@ class User(object):
             role (int): Search only for this role
 
         Returns:
-            Response: This action returns a paged result set containing the resulting UserOrgUnit data blocks for the segment
-                      following your bookmark parameter (or the first segment if the parameter is empty or missing).
+            Response: This action returns a paged result set containing the resulting UserOrgUnit data blocks for
+                      the segment following your bookmark parameter
+                      (or the first segment if the parameter is empty or missing).
         """
 
         result = {'status': 'success', 'data': []}
@@ -278,7 +281,7 @@ class User(object):
         while has_pages:
             page = self.get_course_enrollments_per_page(user_id, role, bookmark)
 
-            if page['status'] == "success":
+            if page['status'] == 'success':
                 if 'Items' in page['data']:
                     result['data'] = result['data'] + page['data']['Items']
 
@@ -293,7 +296,7 @@ class User(object):
 
         return result
 
-    def get_course_enrollments_by_EID(self, EID: str, role: int = 0) -> Response:
+    def get_course_enrollments_by_EID(self, EID: str, role: int = 0) -> Response:  # noqa: N802, N803
         """Retrieve a list of all enrollments for the provided user - search by EID first
 
         Args:
@@ -301,8 +304,9 @@ class User(object):
             role (int): Search only for this role
 
         Returns:
-            Response: This action returns a paged result set containing the resulting UserOrgUnit data blocks for the segment
-                      following your bookmark parameter (or the first segment if the parameter is empty or missing).
+            Response: This action returns a paged result set containing the resulting UserOrgUnit data blocks for
+                      the segment following your bookmark parameter
+                      (or the first segment if the parameter is empty or missing).
         """
 
         user = self.get_user_by_EID(EID)
@@ -328,14 +332,14 @@ class User(object):
         """
 
         # returns url of profile user image
-        url = self._client._raw("GET", "{}/profile/user/{}/image".format(self._client.lp_url, user_id))
+        url = self._client._raw('GET', f'{self._client.lp_url}/profile/user/{user_id}/image')
         if url.status_code == 200:
             return {'status': 'success', 'profileImage': base64.b64encode(url.content).decode('utf-8')}
 
-        return {'status': 'ERR', 'profileImage': "Not Found"}
+        return {'status': 'ERR', 'profileImage': 'Not Found'}
 
     # update profilepic
-    def update_enrolled_users_profile_image(self, user_id: str, profileImageData: str) -> Response:
+    def update_enrolled_users_profile_image(self, user_id: str, profile_image_data: str) -> Response:
         """Update the profile image for the identified personal profile, by User ID.
 
         https://docs.valence.desire2learn.com/res/user.html#post--d2l-api-lp-(version)-profile-user-(userId)-image
@@ -346,30 +350,30 @@ class User(object):
             profileImageData (str): profile image data
 
         Input:
-            Provide an uploaded image file using the simple file upload process; the content-disposition part header for the file
-            part should have the name profileImage
+            Provide an uploaded image file using the simple file upload process;
+            the content-disposition part header for the file part should have the name profileImage
         """
 
-        imageurl = f"{self._client.lp_url}/profile/user/{user_id}/image"
+        imageurl = f'{self._client.lp_url}/profile/user/{user_id}/image'
 
-        file_name = profileImageData.filename
-        file_data = profileImageData.read()
+        file_name = profile_image_data.filename
+        file_data = profile_image_data.read()
         # get extension except .
-        file_extension = file_name[file_name.rfind(".")+1:]
+        file_extension = file_name[file_name.rfind('.')+1:]
 
         # Set the headers
         headers = {
-            "Content-Type": "multipart/form-data; boundary=xxBOUNDARYxx",
-            "Content-Length": str(len(base64.b64encode(file_data).decode()))
+            'Content-Type': 'multipart/form-data; boundary=xxBOUNDARYxx',
+            'Content-Length': str(len(base64.b64encode(file_data).decode()))
         }
 
         # construct body as bytes
-        boundary = b"xxBOUNDARYxx"
-        body = b"--" + boundary + b'\r\n'
+        boundary = b'xxBOUNDARYxx'
+        body = b'--' + boundary + b'\r\n'
         body += b'Content-Disposition: form-data; name="profileImage"; filename="' + file_name.encode() + b'"\r\n'
-        body += b"Content-Type: image/"+file_extension.encode()+ b'\r\n'
-        body += b"\r\n" + file_data + b"\r\n"
-        body += b"--" + boundary + b"--"
+        body += b'Content-Type: image/' + file_extension.encode() + b'\r\n'
+        body += b'\r\n' + file_data + b'\r\n'
+        body += b'--' + boundary + b'--'
 
         return self._client._post(imageurl, data=body, headers=headers)
 

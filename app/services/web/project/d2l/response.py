@@ -1,11 +1,11 @@
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 
 class Response:
     def __init__(self, original) -> None:
         self.original = original
         output = self.original.content.decode()
         if output:
-            if "application/json" in self.original.headers.get("Content-Type", ""):
+            if 'application/json' in self.original.headers.get('Content-Type', ''):
                 self.data = self.original.json()
             else:
                 self.data = output
@@ -13,7 +13,7 @@ class Response:
             self.data = ''
 
     def __repr__(self) -> str:
-        return "<Response [{}]>".format(self.status_code)
+        return '<Response [{self.status_code}]>'
 
     @property
     def status_code(self):

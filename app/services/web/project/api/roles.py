@@ -1,4 +1,4 @@
-from flask import current_app, Blueprint
+from flask import Blueprint, current_app
 from flask_login import login_required
 
 roles = Blueprint('roles', __name__, url_prefix='/roles')

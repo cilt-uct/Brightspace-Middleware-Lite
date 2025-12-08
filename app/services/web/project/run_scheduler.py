@@ -1,3 +1,4 @@
+# ruff: noqa: E402, I001
 import os
 import sys
 
@@ -11,9 +12,9 @@ from project.app import create_app, scheduler
 app = create_app()
 
 with app.app_context():
-    print("Starting dedicated APScheduler process...")
+    print('Starting dedicated APScheduler process...')
     scheduler.start()
-    print("Scheduler running...")
+    print('Scheduler running...')
 
     # keep process alive
     import time

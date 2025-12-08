@@ -1,21 +1,15 @@
 import os
 import re
-import json
-import uuid
 import time
-import traceback
+import uuid
+from datetime import datetime
+from urllib.parse import parse_qs, urlparse
 
-from flask import current_app, Blueprint, jsonify, request
-from flask_login import login_required, current_user
-
+from flask import Blueprint, current_app, request
+from flask_login import login_required
 from werkzeug.utils import secure_filename
 
-from urllib.parse import urlparse, parse_qs
-from datetime import datetime
-
-from project.app import alchemy_db
-
-from ..constants import *
+from ..constants import RE_COURSE_OR_PROGRAM_SANS_SUFFIX, RE_PROGRAM
 from ..utils import Utils
 
 courses = Blueprint('courses', __name__, url_prefix='/course')
@@ -125,19 +119,15 @@ def create_new_course_handler():
     site_creator = data.get('user','created_by')
 
     site_course_code = data.get('course_code', '')
-    create_even_if_it_exists = data.get('create') in (1,"1","on","yes","true") or False
-    check_name = data.get('check_name') in (1,"1","on","yes","true") or False
+    create_even_if_it_exists = data.get('create') in (1,'1','on','yes','true') or False
+    check_name = data.get('check_name') in (1,'1','on','yes','true') or False
 
-    copy_orientation = data.get('copy_orientation') in (1,"1","on","yes","true") or False
+    copy_orientation = data.get('copy_orientation') in (1,'1','on','yes','true') or False
 
-    # per AMA-1153 - ServiceNow always gets orientation content
-    if is_service_now_request():
-        copy_orientation = True
-
-    set_course_active = data.get('active') in (1,"1","on","yes","true") or False
+    set_course_active = data.get('active') in (1,'1','on','yes','true') or False
 
     # Add LR to the course as well - see do_new_course_admin [HELPER]
-    also_add_lecture_recording = data.get('lr') in (1,"1","on","yes","true") or False
+    also_add_lecture_recording = data.get('lr') in (1,'1','on','yes','true') or False
 
     if site_type == 'community':
         site_role = data.get('role', 'Owner')
@@ -209,15 +199,31 @@ def create_new_course_handler():
                 codes = '(' + ','.join(["'" + x + "'" for x in site_codes]) + ')'
 
                 if codes:
-                    cursor.execute(f"""SELECT ifnull(GROUP_CONCAT(DISTINCT `src`.dept ORDER BY `src`.dept asc SEPARATOR ', '),'other') as `dept`,
-	                                          ifnull(GROUP_CONCAT(DISTINCT `src`.faculty ORDER BY `src`.faculty asc SEPARATOR ', '),'other') as `faculty`
+                    cursor.execute(f"""SELECT ifnull(
+                                                    GROUP_CONCAT(DISTINCT `src`.dept
+                                                                    ORDER BY `src`.dept asc SEPARATOR ', ')
+                                                    ,'other'
+                                                ) as `dept`,
+                                                ifnull(
+                                                    GROUP_CONCAT(DISTINCT `src`.faculty
+                                                                    ORDER BY `src`.faculty asc SEPARATOR ', ')
+                                                    ,'other'
+                                                ) as `faculty`
                                         FROM
-                                        (SELECT `pc`.program_code as `provider`, `pc`.acad_career as `career`, `pc`.`description` as title, null as  `dept`, `faculty`.`code` as faculty
+                                        (SELECT `pc`.program_code as `provider`,
+                                                `pc`.acad_career as `career`,
+                                                `pc`.`description` as title,
+                                                null as  `dept`,
+                                                `faculty`.`code` as faculty
                                             FROM ps_program_codes `pc`
                                                 left join d2l_faculty `faculty` on `faculty`.`code` = `pc`.acad_group
                                             where `pc`.`status` = 'A' and `pc`.program_code in {codes}
                                         UNION
-                                            SELECT `course`.course_code as `provider`, `course`.acad_career as `career`, `course`.title, `dept`.`code` as `dept`, `faculty`.`code` as `faculty`
+                                            SELECT `course`.course_code as `provider`,
+                                                    `course`.acad_career as `career`,
+                                                    `course`.title,
+                                                    `dept`.`code` as `dept`,
+                                                    `faculty`.`code` as `faculty`
                                             FROM ps_courses `course`
                                                 left join d2l_dept `dept` on `dept`.`code` = `course`.`dept`
                                                 left join d2l_faculty `faculty` on `faculty`.`AID` = `dept`.`parent`
@@ -233,10 +239,11 @@ def create_new_course_handler():
             course_code = get_course_offering_code(site_codes, site_term, default=f'{dept[0]}_{guid}_{site_term}')
             template_code = get_template_code(site_codes, default=f'{dept[0]}_{site_term}')
 
+            no_program_codes = not are_there_program_codes
             if 'other' in dept and 'other' not in site_faculty_list:
                 # other in dept but we have a valid faculty - so switch to that faculties other dept and set template
-                course_code = f'{site_faculty_list[0]}_{guid}_{site_term}' if not are_there_program_codes else course_code
-                template_code = f'{site_faculty_list[0]}_other_template' if not are_there_program_codes else template_code
+                course_code = f'{site_faculty_list[0]}_{guid}_{site_term}' if no_program_codes else course_code
+                template_code = f'{site_faculty_list[0]}_other_template' if no_program_codes else template_code
                 dept = [f'{site_faculty_list[0]}-other']
 
         # single department and multi faculty
@@ -327,15 +334,18 @@ def update_course(id: int = 0):
     if not _found_course or _found_course.get('status') != 'success':
         return _found_course
 
-    set_course_active = data.get('active') in (1,"1","on","yes","true")
+    set_course_active = data.get('active') in (1,'1','on','yes','true')
     if 'active' not in data:
         set_course_active = _found_course['data']['IsActive']
 
     result = current_app.d2l_client.course.update_course_site(org_id=id,
-                                                            name=data.get('title', data.get('name', _found_course['data']['Name'])),
+                                                            name=data.get('title', data.get('name',
+                                                                                            _found_course['data']['Name'])),
                                                             code=data.get('code', _found_course['data']['Code']),
                                                             active=set_course_active,
-                                                            description=data.get('desc', data.get('description', _found_course['data']['Description']['Text'])))
+                                                            description=data.get('desc',
+                                                                                data.get('description',
+                                                                                        _found_course['data']['Description']['Text']))) # noqa: E501
 
     if not result or result.get('status') != 'success':
         return result
@@ -391,7 +401,9 @@ def get_courses_list_handler():
         exact_code = params['exact_code'][0]
 
     # Calls org structure and filters by "Course Offering" type
-    return current_app.d2l_client.orgunit.get_all_courses_by_page(bookmark=bookmark, org_code=org_code, exact_code=exact_code)
+    return current_app.d2l_client.orgunit.get_all_courses_by_page(bookmark=bookmark,
+                                                                    org_code=org_code,
+                                                                    exact_code=exact_code)
 
 
 # Copy the source/src_org_id course content to the target/org_id course
@@ -428,16 +440,16 @@ def duplicate_course_site():
                                                        src_course['data']['Semester']['Code'])
         semester = current_app.d2l_client.orgunit.get_org_details(src_semester_id)
 
-        new_term_course_code = replace_year(src_course['data']['Code'], site_term)
-        course_code = add_duplicate_postfix(new_term_course_code)
+        new_term_course_code = Utils.replace_year(src_course['data']['Code'], site_term)
+        course_code = Utils.add_duplicate_postfix(new_term_course_code)
 
         if len(course_code) > 50:
-            course_code = f"DUPL_{uuid.uuid4()}_{site_term}"
+            course_code = f'DUPL_{uuid.uuid4()}_{site_term}'
 
         # Create course based on source course
         result = current_app.d2l_client.course.create_site(course_code=course_code,
-                                                            name=data.get('title', f"Copy: {src_course['data']['Name']}"),
-                                                            template_id=src_course['data']['CourseTemplate']['Identifier'],
+                                                            name=data.get('title', f'Copy: {src_course['data']['Name']}'), # noqa: E501
+                                                            template_id=src_course['data']['CourseTemplate']['Identifier'], # noqa: E501
                                                             semester_id=src_semester_id,
                                                             create_even_if_it_exists=True,
                                                             check_name=False)
@@ -453,8 +465,8 @@ def duplicate_course_site():
             # fetch type from DB
             course_type = course_details['type']
 
-        role_id = Utils.get_internal_role("Lecturer")
-        _found_user = current_app.d2l_client.course.get_enrollment_by_id_for_user(org_id=src_course['data']['Identifier'],
+        role_id = Utils.get_internal_role('Lecturer')
+        _found_user = current_app.d2l_client.course.get_enrollment_by_id_for_user(org_id=src_course['data']['Identifier'], # noqa: E501
                                                                                     eid=site_creator)
         if _found_user['status'] == 'success':
             role_id = _found_user['data']['RoleId']
@@ -513,7 +525,7 @@ def import_package_handler():
     # Generate a unique filename using timestamp
     original_filename = secure_filename(file.filename)
     timestamp = int(time.time())
-    unique_filename = f"{timestamp}_{original_filename}"
+    unique_filename = f'{timestamp}_{original_filename}'
     file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
 
     try:
@@ -528,10 +540,10 @@ def import_package_handler():
             try:
                 os.remove(file_path)
             except Exception as e:
-                print(f"Failed to delete uploaded file {file_path}: {e}")
+                print(f'Failed to delete uploaded file {file_path}: {e}')
 
         return result
-    except Exception as e:
+    except Exception:
         return Utils.return_error_state('Internal server error during import', 500)
 
 
@@ -620,13 +632,13 @@ def do_enroll_of_any_user(org_id: int = 0, user_id: int = 0, eid: str = None, ro
     # print(f'do_enroll_of_any_user: {org_id} {user_id} {eid} {role}')
 
     if int(org_id) == 0:
-        return Utils.return_error_state(f'Org ID invalid')
+        return Utils.return_error_state('Org ID invalid')
 
     if int(user_id) == 0 and eid is None:
-        return Utils.return_error_state(f'User ID/EID invalid')
+        return Utils.return_error_state('User ID/EID invalid')
 
     if role is None:
-        return Utils.return_error_state(f'Role invalid')
+        return Utils.return_error_state('Role invalid')
 
     return current_app.d2l_client.course.enroll_any_user(org_id=org_id,
                                                          user_id=user_id,
@@ -698,7 +710,7 @@ def do_enroll_student():
 @courses.route('/enroll/student/bulk', methods=['POST'])
 @login_required
 def bulk_enroll_student():
-    return current_app.d2l_client.course.enroll_student_to_multiple_sites(org_ids=str(request.form.get('org_ids', "")),
+    return current_app.d2l_client.course.enroll_student_to_multiple_sites(org_ids=str(request.form.get('org_ids', '')),
                                                                           eid=request.form.get('eid', None),
                                                                           role=Utils.get_internal_role('Student'))
 
@@ -717,6 +729,17 @@ def do_enroll_member():
                                  eid=data.get('eid', None),
                                  role=Utils.get_internal_role('Member'))
 
+# Check if a user item is valid for batch enrollment
+def is_valid_user_item(item):
+    """Validate a single user item in the batch."""
+    if not isinstance(item, dict):
+        return False
+    if 'org_id' not in item or 'role' not in item:
+        return False
+    if not ('eid' in item or 'user_id' in item):
+        return False
+    return True
+
 # Enroll a batch of users into various courses (org_id)
 # [ { "org_id": <number>, "eid": <string>, "user_id": <number>, "role": <string/number> } ]
 @courses.route('/enroll/batch', methods=['POST'])
@@ -726,15 +749,13 @@ def do_enroll_batch():
     if data is None:
         return Utils.return_error_state('Invalid content type', 406)
 
-    # print(json.dumps(data, indent=2))
-
     batch = data.get('batch', [])
-    print(f"do_enroll_batch: {len(batch)}")
+
     if not isinstance(batch, list) or not batch:
         return Utils.return_error_state('Batch must be a non-empty list')
 
-    if not all(isinstance(item, dict) and 'org_id' in item and ('eid' in item or 'user_id' in item) and 'role' in item for item in batch):
-        return Utils.return_error_state('Each item in batch must be a dict with "org_id","eid"/"user_id", and "role" keys')
+    if not all(is_valid_user_item(item) for item in batch):
+        return Utils.return_error_state('Each item in batch must be a dict with "org_id","eid"/"user_id", and "role" keys') # noqa: E501
 
     return current_app.d2l_client.course.enroll_user_batch(batch=batch)
 

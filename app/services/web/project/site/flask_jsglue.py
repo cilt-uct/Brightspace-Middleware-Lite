@@ -1,3 +1,5 @@
+# ruff: noqa
+
 # Provides a Flask extension that exposes your Flask app's URL routes to JavaScript in the browser.
 # This allows you to use Flask's url_for-like functionality on the client side,
 # so you can generate URLs for your Flask endpoints in JavaScript without hardcoding them.

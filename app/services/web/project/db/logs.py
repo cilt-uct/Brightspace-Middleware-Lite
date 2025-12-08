@@ -1,9 +1,8 @@
-from datetime import datetime
-from mysql.connector import connection, Error
-
 import MySQLdb.cursors
 
-class Logs(object):
+
+class Logs:
+
     def __init__(self, client) -> None:
         self._client = client
 
@@ -16,7 +15,7 @@ class Logs(object):
                         search_st:str = '',
                         search_regex:bool = False):
 
-        result = {'draw' : int(draw), "recordsTotal": 0, "recordsFiltered": 0, "data":[] }
+        result = {'draw' : int(draw), 'recordsTotal': 0, 'recordsFiltered': 0, 'data':[] }
         try:
             with self._client.mysql.connection.cursor(MySQLdb.cursors.DictCursor) as cursor:
                 filter_where, search_where = [], []
@@ -26,7 +25,7 @@ class Logs(object):
                 if 'All' in active_status or 'all' in active_status:
                     pass # let's just show all of it
                 else:
-                    filter_ar['status'] = tuple(status)
+                    filter_ar['status'] = tuple(active_status)
                     filter_where.append('concat(left(`status`,1),"xx") in %(status)s')
 
                 # setup search
@@ -43,11 +42,14 @@ class Logs(object):
                 result['recordsTotal'] = cursor.fetchone()['c']
 
                 # get filtered count with search filters used
-                search_sql = 'where {}'.format(' and '.join(filter_where + search_where)) if (filter_where + search_where) else ''
+                search_sql = ''
+                if (filter_where + search_where):
+                    search_sql = 'where {}'.format(' and '.join(filter_where + search_where))
+
                 cursor.execute(f'SELECT count(*) as c FROM call_log {search_sql}', filter_ar | search_ar)
                 result['recordsFiltered'] = cursor.fetchone()['c']
 
-                cursor.execute(f"""SELECT concat(left(`status`,1),'xx') as status_group, count(*) as c
+                cursor.execute("""SELECT concat(left(`status`,1),'xx') as status_group, count(*) as c
                                     FROM call_log
                                     group by concat(left(`status`,1),'xx') order by status_group""")
                 result['count_status'] = cursor.fetchall()
@@ -59,7 +61,9 @@ class Logs(object):
                                     {search_sql}
                                     order by `{order_column}` {order_dir}
                                     limit %(start)s, %(length)s """
-                cursor.execute(final_sql, {'start': start, 'length': length, 'dt': '%Y-%m-%d %H:%i:%S'} | filter_ar | search_ar)
+                cursor.execute(final_sql, {'start': start,
+                                            'length': length,
+                                            'dt': '%Y-%m-%d %H:%i:%S'} | filter_ar | search_ar)
                 result['data'] = cursor.fetchall()
 
         except (MySQLdb.Error, MySQLdb.Warning) as e:

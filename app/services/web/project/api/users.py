@@ -1,17 +1,6 @@
 
-import pandas as pd
-import traceback
-import re
-
-from flask import current_app, Blueprint, request
+from flask import Blueprint, current_app
 from flask_login import login_required
-
-from project.app import alchemy_db
-
-from urllib.parse import urlparse, parse_qs
-
-from ..utils import Utils
-from ..constants import RE_VULA_REF_SITE
 
 users = Blueprint('users', __name__, url_prefix='/user')
 

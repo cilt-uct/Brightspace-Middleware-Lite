@@ -2,7 +2,7 @@
 
 source base.sh
 
-pre-commit
+bash check.sh
 ret=$?
 if [ $ret -ne 0 ]; then
     echo

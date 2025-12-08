@@ -1,9 +1,25 @@
 
-# Byte-compiled / optimized / DLL files
+# Python - Byte-compiled / optimized / DLL files
 __pycache__/
-**/__pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.env
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
 
 # Flask stuff:
 instance/
@@ -26,11 +42,23 @@ app/**/VERSION
 .env
 .env.run
 
+# Temporary files
+requirements-dev.txt
+ruff_errors.txt
+errors.txt
+
 # datafiles
 *.csv
 
+# Docker
+docker-compose.override.yml
+
 # logfiles
 .log
+
+# OS
+.DS_Store
+Thumbs.db
 
 c.py
 p.py
