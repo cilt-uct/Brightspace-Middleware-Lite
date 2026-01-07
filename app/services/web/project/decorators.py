@@ -7,35 +7,79 @@ from flask import request, Response
 from project.app import alchemy_db
 from .db.models import CallLog
 
-
-SERVICE_NOW_USERNAME = 'servicenow_script'
-
 def process_call_request(func):
     @wraps(func)
     def decorated_function(*args, **kwargs):
         form_data = None
         file_data = None
         json_content = None
+        raw_body = None
 
-        # Check if the request is JSON, form data, or file upload
+        # Capture headers and query args
+        headers = dict(request.headers)
+        args_dict = request.args.to_dict(flat=False)
+
+        # Try to parse JSON safely and capture raw body for debugging
         if request.is_json:
-            json_content = request.get_data(as_text=True)
-        elif request.form:
+            json_content = request.get_json(silent=True)
+            raw_body = request.get_data(as_text=True)
+        else:
+            raw_body = request.get_data(as_text=True)
+
+        if request.form:
             form_data = request.form.to_dict(flat=False)
-        elif request.files:
-            file_data = {
-                key: {
-                    'filename': file.filename,
-                    'content_type': file.content_type,
-                    'size': len(file.read())
+
+        if request.files:
+            file_data = {}
+            for key, file in request.files.items():
+                size = None
+                preview = None
+                stream = getattr(file, 'stream', None)
+
+                # Try to get a content length without consuming the stream
+                try:
+                    size = file.content_length
+                except Exception:
+                    size = None
+
+                # Safely read a small preview and restore stream position when possible
+                if stream is not None:
+                    try:
+                        pos = stream.tell()
+                    except Exception:
+                        pos = None
+                    try:
+                        chunk = stream.read(1024)
+                        if pos is not None:
+                            stream.seek(pos)
+                        try:
+                            preview = chunk.decode('utf-8', errors='replace')
+                        except Exception:
+                            preview = str(chunk)
+                        if size is None:
+                            try:
+                                cur = stream.tell()
+                                stream.seek(0, 2)
+                                size = stream.tell()
+                                stream.seek(cur)
+                            except Exception:
+                                size = size
+                    except Exception:
+                        preview = None
+
+                file_data[key] = {
+                    'filename': getattr(file, 'filename', None),
+                    'content_type': getattr(file, 'content_type', None),
+                    'size': size,
+                    'preview': preview,
                 }
-                for key, file in request.files.items()
-            }
 
         request_body = {
             'url': request.url,
             'method': request.method,
-            'body': {'json': json_content, 'form': form_data, 'files': file_data}
+            'headers': headers,
+            'args': args_dict,
+            'body': {'json': json_content, 'form': form_data, 'files': file_data, 'raw': raw_body},
         }
 
         # Do the request and on exception log the error
@@ -43,43 +87,77 @@ def process_call_request(func):
             result = func(*args, **kwargs)
         except Exception as e:
             # log error case
-            alchemy_db.session.add(CallLog(
-                request=json.dumps(request_body),
-                result=json.dumps({'error': str(e)}),
-                status=500
-            ))
+            alchemy_db.session.add(
+                CallLog(request=json.dumps(request_body), result=json.dumps({'error': str(e)}), status=500)
+            )
             alchemy_db.session.commit()
             raise
 
-        # Normalize response
-        request_result = None
-        status = 200
-        if isinstance(result, tuple):
+        # Normalize response into JSON-serializable structure
+        def _make_serializable(obj):
+            if isinstance(obj, (dict, list, str, int, float, bool)) or obj is None:
+                return obj
+            if isinstance(obj, bytes):
+                return obj.decode('utf-8', errors='replace')
+            try:
+                if isinstance(obj, str):
+                    return json.loads(obj)
+            except Exception:
+                pass
+            return str(obj)
 
-            if isinstance(result[0], Response):
-                request_result = result[0].get_json() if hasattr(result[0], 'get_json') else result[0].data
-                status = result[0].status_code
+        response_data = None
+        status = 200
+
+        if isinstance(result, tuple):
+            body = result[0]
+            # status may be the second element
+            if len(result) > 1 and isinstance(result[1], int):
+                status = result[1]
+            # headers may be passed as second/third but we don't need them for logging here
+
+            if isinstance(body, Response):
+                response_data = body.get_json(silent=True)
+                if response_data is None:
+                    response_data = body.get_data(as_text=True)
+                status = body.status_code
             else:
-                request_result = result[0]
-                status = result[1] if len(result) > 1 and isinstance(result[1], int) else 200
+                response_data = body
 
         elif isinstance(result, Response):
-            try:
-                request_result = result.get_json()
-                status = result.status_code
-            except Exception:
-                request_result = {'status': result.status_code}
-                status = result.status_code
+            status = result.status_code
+            response_data = result.get_json(silent=True)
+            if response_data is None:
+                response_data = result.get_data(as_text=True)
         else:
-            request_result = result
+            response_data = result
 
-        if isinstance(request_result, dict) and 'data' in request_result and len(request_result['data']) > 20:
-            request_result['data'] = request_result['data'][0:20]
+        serializable_response = _make_serializable(response_data)
 
-        alchemy_db.session.add(CallLog(request=json.dumps(request_body),
-                                             result=json.dumps(request_result),
-                                             status=status))
-        alchemy_db.session.commit()
+        # Truncate large 'data' fields to avoid storing huge payloads
+        if isinstance(serializable_response, dict) and 'data' in serializable_response:
+            v = serializable_response['data']
+            if isinstance(v, list) and len(v) > 20:
+                serializable_response['data'] = v[:20]
+            elif isinstance(v, str) and len(v) > 1000:
+                serializable_response['data'] = serializable_response['data'][:1000] + '...'
+
+        # Persist call log (with fallback on serialization error)
+        try:
+            alchemy_db.session.add(
+                CallLog(request=json.dumps(request_body),
+                        result=json.dumps(serializable_response),
+                        status=status)
+            )
+            alchemy_db.session.commit()
+        except Exception:
+            alchemy_db.session.rollback()
+            alchemy_db.session.add(
+                CallLog(request=json.dumps(request_body),
+                        result=json.dumps({'result': str(serializable_response)}),
+                        status=status)
+            )
+            alchemy_db.session.commit()
 
         return result
 

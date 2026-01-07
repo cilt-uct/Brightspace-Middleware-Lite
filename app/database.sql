@@ -21,7 +21,7 @@ CREATE TABLE `auth_token` (
 CREATE TABLE `call_log` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `request` text,
-  `result` text,
+  `result` longtext,
   `status` int NOT NULL DEFAULT '200',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
