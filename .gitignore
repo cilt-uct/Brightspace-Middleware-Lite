@@ -41,6 +41,7 @@ app/**/VERSION
 # Docker
 .env
 .env.run
+!app/.env
 
 # Temporary files
 requirements-dev.txt

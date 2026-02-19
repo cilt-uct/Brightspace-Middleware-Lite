@@ -84,7 +84,7 @@ def login():
     # if not then we force the creation of one
     has_admin = user = User.query.filter_by(is_admin=True).first()
     if not has_admin:
-        return redirect(url_for('system.setup'))
+        return redirect(url_for('site.system.setup'))
 
     return render_template('system/login.html', form=form, year= datetime.now().year)
 
