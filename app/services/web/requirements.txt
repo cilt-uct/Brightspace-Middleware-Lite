@@ -80,7 +80,7 @@ pydantic_core==2.41.5
 Pygments==2.19.2
 PyMySQL==1.1.2
 pyodata==1.11.2
-pyOpenSSL==25.3.0
+pyOpenSSL==26.0.0
 pytest==8.4.2
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
