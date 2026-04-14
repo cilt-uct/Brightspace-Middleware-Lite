@@ -81,7 +81,7 @@ Pygments==2.20.0
 PyMySQL==1.1.2
 pyodata==1.11.2
 pyOpenSSL==26.0.0
-pytest==8.4.2
+pytest==9.0.3
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 pytz==2025.2
