@@ -83,7 +83,7 @@ pyodata==1.11.2
 pyOpenSSL==26.3.0
 pytest==9.0.3
 python-dateutil==2.9.0.post0
-python-dotenv==1.2.1
+python-dotenv==1.2.2
 pytz==2025.2
 PyYAML==6.0.3
 rauth==0.7.3
