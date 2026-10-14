@@ -60,7 +60,7 @@ lxml==6.1.0
 Mako==1.4.2
 MarkupSafe==3.0.3
 more-itertools==10.8.0
-multidict==6.7.0
+multidict==6.9.1
 mysql-connector-python==9.5.0
 mysqlclient==2.2.7
 numpy==2.3.4
