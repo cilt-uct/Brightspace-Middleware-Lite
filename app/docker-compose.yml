@@ -26,6 +26,7 @@ services:
       - passwords
 
   lite_scheduler:
+    container_name: lite_scheduler
     image: localhost:5000/lite_web:latest  # reuse same image
     build:
       context: ./services/web
